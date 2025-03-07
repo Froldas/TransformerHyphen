@@ -2,3 +2,30 @@
 
 :author: Froldas
 
+== Getting started
+
+Python version >= 3.12 required.
+
+`pip install -r requirements.txt`
+
+== about
+
+Hyphenation using transformers
+
+=== How to use
+
+There are three scripts which you can run.
+
+`train.py`
+
+Runs training of the model and dumps the network files with its configuration.
+MUST BE RUN BEFORE ALL OTHER TASKS.
+
+`inference.py <INPUT_STRING>`
+
+Runs inference on the last trained model on the input string.
+
+`evaluate.py`
+
+Runs evaluation on the last trained model.
+Also dumps all mis-predicted words to a .txt file.
