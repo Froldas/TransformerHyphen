@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from src.dataset import HyphenationDataset
 from src.models.simple_mlp import SimpleMLP
-from src.utils import load_yaml_conf
+from src.utils import load_yaml_conf, train_epoch, validate
 
 YML_CONF_PATH = "configuration.yml"
 
@@ -33,36 +33,16 @@ def main():
 
     model = SimpleMLP(dataset.input_size, 64, dataset.output_size).to(device)
 
-    criterion = nn.BCELoss()
+    loss_func = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     # Training Loop
     num_epochs = config["num_epochs"]
+
     for epoch in range(num_epochs):
-        model.train()
-        epoch_loss = []
-        for batch_X, batch_y in train_loader:
-            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-
-            # Forward pass
-            outputs = model(batch_X)
-            loss = criterion(outputs, batch_y)
-
-            # Backward pass and optimization
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            epoch_loss.append(float(loss))
+        epoch_loss = train_epoch(model, train_loader, optimizer, loss_func, device)
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
-        model.eval()
-        with torch.no_grad():
-            val_loss = []
-            for batch_X, batch_y in val_loader:
-                batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-                predictions = model(batch_X)
-                loss = criterion(predictions, batch_y)
-                val_loss.append(float(loss))
-            print(f'Val loss: {np.mean(val_loss):.4f}')
+        validate(model, loss_func, val_loader, device)
 
     # Save the model
     os.makedirs(config["work_dir"], exist_ok=True)
