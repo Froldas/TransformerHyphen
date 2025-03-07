@@ -1,31 +1,30 @@
 import sys
+
+from pathlib import Path
 from torch import Tensor, load
 
 from src.dataset import HyphenationInterace, insert_hyphenation
-from src.model import SimpleMLP
+from src.models.simple_mlp import SimpleMLP
+from src.utils import load_yaml_conf
 
-batch_size = 8
-data_file = "data/cs-all-cstenten.wlh"
+YML_CONF_PATH = "configuration.yml"
+
 
 def main():
-    hyp_itf = HyphenationInterace.load_configuration()
+    config = load_yaml_conf(Path(YML_CONF_PATH))
+    hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
 
-    loaded_model = SimpleMLP(hyp_itf.input_size, 512, hyp_itf.output_size)
-    (loaded_model.load_state_dict
-     (load('simple_mlp_model.pth')))
+    model_path = Path(config["work_dir"]) / config["model_path"]
+    loaded_model = SimpleMLP(hyp_itf.input_size, 64, hyp_itf.output_size)
+    loaded_model.load_state_dict(load(model_path))
     loaded_model.eval()
 
-    itf = HyphenationInterace.load_configuration()
-
-    data = []
-    with open("data/test_text.txt", "r+", encoding="utf-8") as f:
-        data = f.readline()
-
-    data = data.split(" ")
-
+    #with open("datasets/test_text.txt", "r+", encoding="utf-8") as f:
+    #    data = f.readline()
+    #data = data.split(" ")
+    # for word in data:
     for word in sys.argv[1:]:
-    #for word in data:
-        input_tensor = Tensor(itf.convert_word_to_input_tensor(word))
+        input_tensor = Tensor(hyp_itf.convert_word_to_input_tensor(word))
         output = loaded_model(input_tensor)
         print(insert_hyphenation(word, output))
 

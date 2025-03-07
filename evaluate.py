@@ -1,35 +1,43 @@
 import numpy as np
-from torch import  load
 import torch
 
+from torch import load
+from pathlib import Path
+
 from src.dataset import HyphenationDataset, HyphenationInterace, insert_hyphenation
-from src.model import SimpleMLP
+from src.models.simple_mlp import SimpleMLP
+from src.utils import load_yaml_conf
+
+YML_CONF_PATH = "configuration.yml"
+def main():
+    config = load_yaml_conf(Path(YML_CONF_PATH))
+    hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
+    model_path = Path(config["work_dir"]) / config["model_path"]
+    loaded_model = SimpleMLP(hyp_itf.input_size, 64, hyp_itf.output_size)
+    loaded_model.load_state_dict(load(model_path))
+    loaded_model.eval()
+
+    dataset = HyphenationDataset(data_file=config["dataset"],
+                                 work_dir=config["work_dir"],
+                                 print_info=config["print_dataset_statistics"])
+    X = []
+    y = []
+    for data_point in dataset:
+        features, label = data_point
+        X.append(features)  # Convert features to NumPy array
+        y.append(label)
+
+    y_pred = loaded_model(torch.Tensor(np.array(X)).to("cpu"))
+    from sklearn.metrics import accuracy_score
+
+    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), y_pred.to("cpu").detach().numpy())
+
+    print(f"Accuracy: {accuracy}")
+    with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
+        for i in range(len(dataset)):
+            if not torch.equal(y_pred[i], torch.Tensor(y[i])):
+                f.writelines(f"GT: {dataset.words[i]} | PRED: {insert_hyphenation(dataset.words[i].replace("-", ""), y_pred[i])}\n")
 
 
-data_file = "data/cs-all-cstenten.wlh"
-
-hyp_itf = HyphenationInterace.load_configuration()
-
-loaded_model = SimpleMLP(hyp_itf.input_size, 512, hyp_itf.output_size)
-loaded_model.load_state_dict(load('simple_mlp_model.pth'))
-loaded_model.eval()
-
-
-dataset = HyphenationDataset(data_file=data_file)
-X = []
-y = []
-for data_point in dataset:
-    features, label = data_point
-    X.append(features)  # Convert features to NumPy array
-    y.append(label)
-
-y_pred = loaded_model(torch.Tensor(np.array(X)).to("cpu"))
-from sklearn.metrics import accuracy_score
-
-accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), y_pred.to("cpu").detach().numpy())
-
-print(f"Full dataset acc: {accuracy}")
-with open("wrongly_predicted.txt", "w+", encoding="utf-8") as f:
-    for i in range(len(dataset)):
-        if not torch.equal(y_pred[i], torch.Tensor(y[i])):
-            f.writelines(f"GT: {dataset.words[i]} | PRED: {insert_hyphenation(dataset.words[i].replace("-", ""), y_pred[i])}\n")
+if __name__ == "__main__":
+    main()

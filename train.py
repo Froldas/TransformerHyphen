@@ -1,37 +1,43 @@
+import os
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from src.dataset import HyphenationDataset, insert_hyphenation
-from src.model import SimpleMLP
+from pathlib import Path
 from torch.utils.data import DataLoader
 
-batch_size = 8
-data_file = "data/cs-all-cstenten.wlh"
+from src.dataset import HyphenationDataset
+from src.models.simple_mlp import SimpleMLP
+from src.utils import load_yaml_conf
+
+YML_CONF_PATH = "configuration.yml"
 
 def main():
+    config = load_yaml_conf(Path(YML_CONF_PATH))
     # Create datasets and dataloaders
-    dataset = HyphenationDataset(data_file=data_file)
-    train_size = int(0.9 * len(dataset))
+    dataset = HyphenationDataset(data_file=config["dataset"],
+                                 work_dir=config["work_dir"],
+                                 print_info=config["print_dataset_statistics"])
+    train_size = int(config["train_split"] * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
     # Check if CUDA is available
-    device = "cuda" #torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    model = SimpleMLP(dataset.input_size,512, dataset.output_size).to(device)
+    model = SimpleMLP(dataset.input_size, 64, dataset.output_size).to(device)
 
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     # Training Loop
-    num_epochs = 10
+    num_epochs = config["num_epochs"]
     for epoch in range(num_epochs):
         model.train()
         epoch_loss = []
@@ -58,22 +64,12 @@ def main():
                 val_loss.append(float(loss))
             print(f'Val loss: {np.mean(val_loss):.4f}')
 
-
     # Save the model
-    torch.save(model.state_dict(), 'simple_mlp_model.pth')
-    print("Model saved to simple_mlp_model.pth")
+    os.makedirs(config["work_dir"], exist_ok=True)
+    output_model_path = Path(config["work_dir"]) / config["model_path"]
+    torch.save(model.state_dict(), output_model_path)
+    print(f"Model saved to {output_model_path}")
 
-    X = []
-    y = []
-    for data_point in dataset:
-        features, label = data_point
-        X.append(features)  # Convert features to NumPy array
-        y.append(label)
-    y_pred = model(torch.Tensor(np.array(X)).to(device))
-    from sklearn.metrics import accuracy_score
-    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), y_pred.to("cpu").detach().numpy())
-
-    print(f"Accuracy: {accuracy}")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,15 @@
+---
+# model selection not working yet
+# model: simple_mlp
+batch_size: 8
+num_epochs: 10
+train_split: 0.9
+learning_rate: 0.001
+dataset: datasets/cs-ujc.wlh
+work_dir: build
+model_path: output_model.pth
+configuration_path: model_conf.pk
+mispredict_path: wrong_predicted.txt
+print_dataset_statistics: False
+# early_stopping not working yet
+# early_stopping: True
