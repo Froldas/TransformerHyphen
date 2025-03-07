@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import torch.nn as nn
 import torch
 import os
@@ -12,6 +13,16 @@ def load_yaml_conf(path: str | os.PathLike):
         except yaml.YAMLError as exc:
             print(exc)
 
+
+def set_seed(seed: int):
+    """
+    Fix the seed for all libraries to guarantee reproducibility
+    :param seed: integer seed value
+    :return: None
+    """
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
 
 def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
     model.train()

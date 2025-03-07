@@ -4,18 +4,28 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import random
 
 from pathlib import Path
 from torch.utils.data import DataLoader
 
 from src.dataset import HyphenationDataset
 from src.models.simple_mlp import SimpleMLP
-from src.utils import load_yaml_conf, train_epoch, validate
+from src.utils import set_seed, load_yaml_conf, train_epoch, validate
 
 YML_CONF_PATH = "configuration.yml"
 
+
 def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
+
+    # Check if CUDA is available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
+    # set seed for reproducibility
+    set_seed(config["seed"])
+
     # Create datasets and dataloaders
     dataset = HyphenationDataset(data_file=config["dataset"],
                                  work_dir=config["work_dir"],
@@ -27,9 +37,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
-    # Check if CUDA is available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+
 
     model = SimpleMLP(dataset.input_size, 64, dataset.output_size).to(device)
 
