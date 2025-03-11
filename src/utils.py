@@ -1,10 +1,10 @@
 import numpy as np
 import random
 import torch.nn as nn
-from torch import no_grad, manual_seed
 import os
 import yaml
 
+from torch import no_grad, manual_seed
 
 def load_yaml_conf(path: str | os.PathLike):
     with open(path) as stream:
