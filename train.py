@@ -35,7 +35,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
-    model = ModelDict(len(dataset.longest_word),dataset.bits_per_letter, dataset.output_size).models[config["model"]].to(device)
+    model = ModelDict(dataset.num_input_tokens, dataset.embed_size, dataset.output_size).models[config["model"]].to(device)
 
     loss_func = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])

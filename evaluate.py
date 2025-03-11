@@ -15,7 +15,7 @@ def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
     hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
     model_path = Path(config["work_dir"]) / config["model_path"]
-    loaded_model = ModelDict(len(hyp_itf.longest_word), hyp_itf.bits_per_letter, hyp_itf.output_size).models[config["model"]]
+    loaded_model = ModelDict(hyp_itf.num_input_tokens, hyp_itf.embed_size, hyp_itf.output_size).models[config["model"]]
     loaded_model.load_state_dict(load(model_path))
     loaded_model.eval()
 
