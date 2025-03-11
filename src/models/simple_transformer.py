@@ -30,7 +30,7 @@ class SelfAttention(nn.Module):
 
 
 class SimpleTransformer(nn.Module):
-    def __init__(self, embed_size, num_classes):
+    def __init__(self, input_tokens, embed_size, num_classes):
         super(SimpleTransformer, self).__init__()
         self.attention = SelfAttention(embed_size)
         self.fc = nn.Linear(168, 32)

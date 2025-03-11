@@ -1,6 +1,5 @@
 ---
-# model selection not working yet
-# model: simple_mlp
+model: SimpleTransformer
 seed: 42
 batch_size: 8
 num_epochs: 10

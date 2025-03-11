@@ -9,8 +9,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 
 from src.dataset import HyphenationDataset
-from src.models.simple_mlp import SimpleMLP
-from src.models.simple_transformer import SimpleTransformer
+from src.ModelDict import ModelDict
 from src.utils import set_seed, load_yaml_conf, train_epoch, validate
 
 YML_CONF_PATH = "configuration.yml"
@@ -37,7 +36,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
-    model = SimpleTransformer(dataset.bits_per_letter, dataset.output_size)#SimpleTransformer(dataset.input_size, 64, dataset.output_size).to(device)
+    model = ModelDict(len(dataset.longest_word),dataset.bits_per_letter, dataset.output_size).models[config["model"]].to(device)
 
     loss_func = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
