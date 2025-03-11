@@ -52,3 +52,20 @@ def validate(model: nn.Module, loss_func, validation_loader, device):
             loss = loss_func(predictions, batch_y)
             val_loss.append(float(loss))
         print(f'Val loss: {np.mean(val_loss):.4f}')
+
+
+def insert_hyphenation(string, bit_list):
+    # Convert the string to a list for easier manipulation
+    string_list = list(string)
+
+    # Iterate over the bit_list and insert '-' where there is a 1
+    hyphens_inserted = 0
+    for index, bit in enumerate(bit_list):
+        if bit == 1:
+            # Insert '-' at the predicted spot
+            string_list.insert(index + hyphens_inserted + 1, '-')
+            hyphens_inserted += 1
+
+    # Convert the list back to a string
+    result_string = ''.join(string_list)
+    return result_string

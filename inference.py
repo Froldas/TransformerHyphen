@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 from torch import Tensor, load
 
-from src.dataset import HyphenationInterace, insert_hyphenation
+from src.dataset import HyphenationInterace
 from src.ModelDict import ModelDict
-from src.utils import load_yaml_conf
+from src.utils import load_yaml_conf, insert_hyphenation
 
 YML_CONF_PATH = "configuration.yml"
 
