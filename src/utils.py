@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import torch.nn as nn
-import torch
+from torch import no_grad, manual_seed
 import os
 import yaml
 
@@ -20,7 +20,7 @@ def set_seed(seed: int):
     :param seed: integer seed value
     :return: None
     """
-    torch.manual_seed(seed)
+    manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
 
@@ -44,7 +44,7 @@ def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
 
 def validate(model: nn.Module, loss_func, validation_loader, device):
     model.eval()
-    with torch.no_grad():
+    with no_grad():
         val_loss = []
         for batch_X, batch_y in validation_loader:
             batch_X, batch_y = batch_X.to(device), batch_y.to(device)

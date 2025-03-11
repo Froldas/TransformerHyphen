@@ -6,6 +6,7 @@ from pathlib import Path
 
 from src.dataset import HyphenationDataset, HyphenationInterace, insert_hyphenation
 from src.models.simple_mlp import SimpleMLP
+from src.models.simple_transformer import SimpleTransformer
 from src.utils import load_yaml_conf
 
 YML_CONF_PATH = "configuration.yml"
@@ -13,7 +14,7 @@ def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
     hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
     model_path = Path(config["work_dir"]) / config["model_path"]
-    loaded_model = SimpleMLP(hyp_itf.input_size, 64, hyp_itf.output_size)
+    loaded_model = SimpleTransformer(hyp_itf.bits_per_letter, hyp_itf.output_size)#SimpleTransformer(dataset.input_size, 64, dataset.output_size).to(device)
     loaded_model.load_state_dict(load(model_path))
     loaded_model.eval()
 
