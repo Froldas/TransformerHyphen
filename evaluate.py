@@ -5,9 +5,9 @@ from sklearn.metrics import accuracy_score
 from torch import load
 from pathlib import Path
 
-from src.dataset import HyphenationDataset, HyphenationInterace, insert_hyphenation
+from src.dataset import HyphenationDataset, HyphenationInterace
 from src.ModelDict import ModelDict
-from src.utils import load_yaml_conf
+from src.utils import load_yaml_conf, insert_hyphenation
 
 
 YML_CONF_PATH = "configuration.yml"
