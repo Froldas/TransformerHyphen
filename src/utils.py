@@ -1,11 +1,12 @@
+import logging
 import numpy as np
+import os
+import pathlib
 import random
 import torch.nn as nn
-import os
 import yaml
-
+import sys
 from torch import no_grad, manual_seed
-
 
 def load_yaml_conf(path: str | os.PathLike):
     with open(path) as stream:
@@ -24,6 +25,30 @@ def set_seed(seed: int):
     manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
+
+
+def setup_logger(log_path):
+    """
+    Setup the logger and remove all logs
+    :param log_path: filepath to the logging file
+    :return: None
+    """
+
+    # remove all logging file
+    pathlib.Path.unlink(log_path, missing_ok=True)
+
+    # Configure the logger
+    logging.basicConfig(
+        level=logging.INFO,  # Set the logging level to INFO
+        format='%(asctime)s - %(message)s',  # Define the log message format
+        datefmt='%Y-%m-%d %I:%M:%S',
+        handlers=[
+            logging.FileHandler(log_path, "w+", 'utf-8'),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
+
 
 
 def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
@@ -53,7 +78,7 @@ def validate(model: nn.Module, loss_func, validation_loader, device):
             predictions = model(batch_X)
             loss = loss_func(predictions, batch_y)
             val_loss.append(float(loss))
-        print(f'Val loss: {np.mean(val_loss):.4f}')
+        logging.info(f'Val loss: {np.mean(val_loss):.4f}')
 
 
 def insert_hyphenation(string, bit_list):

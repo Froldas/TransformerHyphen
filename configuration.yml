@@ -11,6 +11,7 @@ work_dir: build
 model_path: output_model.pth
 configuration_path: model_conf.pk
 mispredict_path: wrong_predicted.txt
+training_log_path: training.log
 print_dataset_statistics: False
 # early_stopping not working yet
 # early_stopping: True

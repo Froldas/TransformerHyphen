@@ -1,6 +1,5 @@
-import math
+import logging
 import os
-import numpy as np
 import pickle
 
 from pathlib import Path
@@ -112,11 +111,11 @@ class HyphenationDataset(Dataset, HyphenationInterace):
                 self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
 
     def _print_info(self):
-        print(f"Input_size: {self.input_size}")
-        print(f"Number of unique letters: {self.num_unique_letters}")
-        print(f"Unique letters: {sorted(self.unique_letters)}")
-        print(f"Longest word: {self.longest_word}")
-        print(f"Letter encoding: {self.letter_encoding}")
+        logging.info(f"Input_size: {self.input_size}")
+        logging.info(f"Number of unique letters: {self.num_unique_letters}")
+        logging.info(f"Unique letters: {sorted(self.unique_letters)}")
+        logging.info(f"Longest word: {self.longest_word}")
+        logging.info(f"Letter encoding: {self.letter_encoding}")
 
     def __len__(self):
         return len(self.words)

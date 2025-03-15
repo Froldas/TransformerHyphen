@@ -1,3 +1,4 @@
+import logging
 import os
 import numpy as np
 import torch
@@ -9,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from src.dataset import HyphenationDataset
 from src.ConfDict import Models, Encodings
-from src.utils import set_seed, load_yaml_conf, train_epoch, validate
+from src.utils import set_seed, load_yaml_conf, train_epoch, validate, setup_logger
 
 YML_CONF_PATH = "configuration.yml"
 
@@ -17,9 +18,11 @@ YML_CONF_PATH = "configuration.yml"
 def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
 
+    setup_logger(Path(config["work_dir"]) / config["training_log_path"])
+
     # Check if CUDA is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    logging.info(f"Using device: {device}")
 
     # set seed for reproducibility
     set_seed(config["seed"])
@@ -29,6 +32,7 @@ def main():
                                  work_dir=config["work_dir"],
                                  encoding=Encodings().encodings[config["encoding"]],
                                  print_info=config["print_dataset_statistics"])
+
     train_size = int(config["train_split"] * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
@@ -46,14 +50,14 @@ def main():
 
     for epoch in range(num_epochs):
         epoch_loss = train_epoch(model, train_loader, optimizer, loss_func, device)
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
+        logging.info(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
         validate(model, loss_func, val_loader, device)
 
     # Save the model
     os.makedirs(config["work_dir"], exist_ok=True)
     output_model_path = Path(config["work_dir"]) / config["model_path"]
     torch.save(model.state_dict(), output_model_path)
-    print(f"Model saved to {output_model_path}")
+    logging.info(f"Model saved to {output_model_path}")
 
 
 if __name__ == "__main__":
