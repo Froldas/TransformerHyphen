@@ -13,7 +13,7 @@ class Encoding(ABC):
 
     @property
     @abstractmethod
-    def letter_encoding(self) -> dict[str, Any]:
+    def letter_encoding(self) -> dict[str, [Any]]:
         """This must be implemented by subclasses"""
         pass
 
