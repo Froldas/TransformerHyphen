@@ -8,7 +8,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 
 from src.dataset import HyphenationDataset
-from src.ModelDict import ModelDict
+from src.ConfDict import Models, Encodings
 from src.utils import set_seed, load_yaml_conf, train_epoch, validate
 
 YML_CONF_PATH = "configuration.yml"
@@ -27,6 +27,7 @@ def main():
     # Create datasets and dataloaders
     dataset = HyphenationDataset(data_file=config["dataset"],
                                  work_dir=config["work_dir"],
+                                 encoding=Encodings().encodings[config["encoding"]],
                                  print_info=config["print_dataset_statistics"])
     train_size = int(config["train_split"] * len(dataset))
     val_size = len(dataset) - train_size
@@ -35,7 +36,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
-    model = ModelDict(dataset.num_input_tokens, dataset.embed_size, dataset.output_size).models[config["model"]].to(device)
+    model = Models(dataset.num_input_tokens, dataset.encoding_size, dataset.output_size).models[config["model"]].to(device)
 
     loss_func = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])

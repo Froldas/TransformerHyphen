@@ -6,6 +6,7 @@ import yaml
 
 from torch import no_grad, manual_seed
 
+
 def load_yaml_conf(path: str | os.PathLike):
     with open(path) as stream:
         try:
@@ -23,6 +24,7 @@ def set_seed(seed: int):
     manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
+
 
 def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
     model.train()

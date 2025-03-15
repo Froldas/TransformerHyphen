@@ -30,16 +30,18 @@ class SelfAttention(nn.Module):
 
 
 class SimpleTransformer(nn.Module):
-    def __init__(self, input_tokens, embed_size, num_classes):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
         super(SimpleTransformer, self).__init__()
+        self.input_tokens = input_tokens
+        self.embed_size = embed_size
         self.attention = SelfAttention(embed_size)
-        self.fc = nn.Linear(168, 32)
-        self.fc_out = nn.Linear(32, num_classes)
+        self.fc = nn.Linear(input_tokens*embed_size, hidden_size)
+        self.fc_out = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x = x.view(x.shape[0], 28, -1)
+        x = x.view(x.shape[0], self.input_tokens, -1)
         x = self.attention(x)
-        x = x.view(-1, 168)
+        x = x.view(-1, self.input_tokens*self.embed_size)
         #x = x.mean(dim=1)
         x = F.relu(self.fc(x))
         x = self.fc_out(x)

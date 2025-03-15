@@ -6,7 +6,7 @@ from torch import load
 from pathlib import Path
 
 from src.dataset import HyphenationDataset, HyphenationInterace
-from src.ModelDict import ModelDict
+from src.ConfDict import Models, Encodings
 from src.utils import load_yaml_conf, insert_hyphenation
 
 
@@ -15,12 +15,13 @@ def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
     hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
     model_path = Path(config["work_dir"]) / config["model_path"]
-    loaded_model = ModelDict(hyp_itf.num_input_tokens, hyp_itf.embed_size, hyp_itf.output_size).models[config["model"]]
+    loaded_model = Models(hyp_itf.num_input_tokens, hyp_itf.encoding_size, hyp_itf.output_size).models[config["model"]]
     loaded_model.load_state_dict(load(model_path))
     loaded_model.eval()
 
     dataset = HyphenationDataset(data_file=config["dataset"],
                                  work_dir=config["work_dir"],
+                                 encoding=Encodings().encodings[config["encoding"]],
                                  print_info=config["print_dataset_statistics"])
     X = []
     y = []
