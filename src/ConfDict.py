@@ -1,9 +1,9 @@
 from src.models.simple_mlp import SimpleMLP
 from src.models.simple_transformer import SimpleTransformer
 
-from src.encodings.binary import BinaryEncoding
+from src.encodings.binary import BinaryEncoding, OneHotEncoding
 #from src.encodings.word_embeddings import SimpleTransformer
-from src.encodings.float import FloatEncoding
+from src.encodings.float import SimpleFloatEncoding
 
 """
 File tracking the mapping of the configuration fields:
@@ -27,5 +27,5 @@ class Encodings:
     """
     def __init__(self):
         self.encodings = {"binary": BinaryEncoding,
-                          "word_embeddings": True,
-                          "float": FloatEncoding}
+                          "one_hot": OneHotEncoding,
+                          "simple_float": SimpleFloatEncoding}

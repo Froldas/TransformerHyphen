@@ -72,11 +72,11 @@ class HyphenationDataset(Dataset, HyphenationInterace):
         self.letter_encoding = {}
         self.datapoints = []
 
-        self._read_configuration(data_file)
+        self._read_dataset(data_file)
 
         self.num_unique_letters = len(self.unique_letters)
 
-        self.encoding = encoding(self.unique_letters)
+        self.encoding = encoding(sorted(self.unique_letters))
         self.letter_encoding = self.encoding.letter_encoding
         self.encoding_size = self.encoding.encoding_size
 
@@ -101,7 +101,7 @@ class HyphenationDataset(Dataset, HyphenationInterace):
 
         self._dump_configuration()
 
-    def _read_configuration(self, data_file_path):
+    def _read_dataset(self, data_file_path):
         with open(data_file_path, 'r', encoding='utf-8') as f:
             for line in f:
                 word = line.strip()

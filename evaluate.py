@@ -11,6 +11,8 @@ from src.utils import load_yaml_conf, insert_hyphenation
 
 
 YML_CONF_PATH = "configuration.yml"
+
+
 def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
     hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
@@ -34,7 +36,8 @@ def main():
 
     accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), y_pred.to("cpu").detach().numpy())
 
-    print(f"Accuracy: {accuracy}")
+    print(f"Accuracy: {accuracy:.4f}")
+
     with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
         for i in range(len(dataset)):
             if not torch.equal(y_pred[i], torch.Tensor(y[i])):
