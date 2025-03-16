@@ -48,3 +48,5 @@ Here is the list of the most important ones:
 `one_hot` - letters are converted to a one-hot vector based on their index
 
 `simple_float` - letters are converted to a single float with even spacing
+
+`advanced_float` - letters are converted to a single float with vowels and consonants grouped

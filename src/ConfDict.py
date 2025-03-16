@@ -3,7 +3,7 @@ from src.models.simple_transformer import SimpleTransformer
 
 from src.encodings.binary import BinaryEncoding, OneHotEncoding
 #from src.encodings.word_embeddings import SimpleTransformer
-from src.encodings.float import SimpleFloatEncoding
+from src.encodings.float import SimpleFloatEncoding, AdvancedFloatEncoding
 
 """
 File tracking the mapping of the configuration fields:
@@ -28,4 +28,5 @@ class Encodings:
     def __init__(self):
         self.encodings = {"binary": BinaryEncoding,
                           "one_hot": OneHotEncoding,
-                          "simple_float": SimpleFloatEncoding}
+                          "simple_float": SimpleFloatEncoding,
+                          "advanced_float": AdvancedFloatEncoding}
