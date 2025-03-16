@@ -7,7 +7,7 @@ import tensorflow as tf
 from torch.utils.data import Dataset
 
 
-class HyphenationInterace():
+class HyphenationInterface:
     def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir):
         self.num_input_tokens = num_input_tokens
         self.encoding_size = encoding_size
@@ -41,11 +41,10 @@ class HyphenationInterace():
         return Path(self.work_dir) / "conf.pk"
 
     def _dump_configuration(self):
-        data = {}
-        data["num_input_tokens"] = self.num_input_tokens
-        data["encoding_size"] = self.encoding_size
-        data["output_size"] = self.output_size
-        data["letter_encoding"] = self.letter_encoding
+        data = {"num_input_tokens": self.num_input_tokens,
+                "encoding_size"   : self.encoding_size,
+                "output_size"     : self.output_size,
+                "letter_encoding" : self.letter_encoding}
 
         os.makedirs(Path(self.work_dir), exist_ok=True)
 
@@ -54,16 +53,16 @@ class HyphenationInterace():
 
     @staticmethod
     def load_configuration(work_dir, conf_path):
-        with open(Path("build") / "conf.pk", "rb") as f:
+        with open(Path(work_dir) / conf_path, "rb") as f:
             data = pickle.load(f)
-        return HyphenationInterace(data["num_input_tokens"],
+        return HyphenationInterface(data["num_input_tokens"],
                                    data["encoding_size"],
                                    data["output_size"],
                                    data["letter_encoding"],
                                    Path("build"))
 
 
-class HyphenationDataset(Dataset, HyphenationInterace):
+class HyphenationDataset(Dataset, HyphenationInterface):
     def __init__(self, data_file, work_dir, encoding=None, print_info=False):
         self.unique_letters = set()
         self.longest_word = ""
@@ -72,8 +71,6 @@ class HyphenationDataset(Dataset, HyphenationInterace):
         self.datapoints = []
 
         self._read_dataset(data_file)
-
-        self.num_unique_letters = len(self.unique_letters)
 
         self.encoding = encoding(sorted(self.unique_letters))
         self.letter_encoding = self.encoding.letter_encoding
@@ -112,7 +109,7 @@ class HyphenationDataset(Dataset, HyphenationInterace):
 
     def _print_info(self):
         logging.info(f"Input_size: {self.input_size}")
-        logging.info(f"Number of unique letters: {self.num_unique_letters}")
+        logging.info(f"Number of unique letters: {len(self.unique_letters)}")
         logging.info(f"Unique letters: {sorted(self.unique_letters)}")
         logging.info(f"Longest word: {self.longest_word}")
         logging.info(f"Letter encoding: {self.letter_encoding}")

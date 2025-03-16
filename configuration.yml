@@ -1,6 +1,6 @@
 ---
 model: SimpleTransformer
-encoding: simple_float
+encoding: advanced_float
 seed: 42
 batch_size: 32
 num_epochs: 10
@@ -12,6 +12,6 @@ model_path: output_model.pth
 configuration_path: model_conf.pk
 mispredict_path: wrong_predicted.txt
 training_log_path: training.log
-print_dataset_statistics: False
+print_dataset_statistics: True
 # early_stopping not working yet
 # early_stopping: True
