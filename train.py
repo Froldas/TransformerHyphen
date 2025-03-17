@@ -7,6 +7,7 @@ import torch.optim as optim
 
 from pathlib import Path
 from torch.utils.data import DataLoader
+from torchview import draw_graph
 
 from src.dataset import HyphenationDataset
 from src.ConfDict import Models, Encodings
@@ -19,7 +20,6 @@ def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
 
     setup_logger(Path(config["work_dir"]) / config["training_log_path"])
-
     # Check if CUDA is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"Using device: {device}")
@@ -40,7 +40,8 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
-    model = Models(dataset.num_input_tokens, dataset.encoding_size, dataset.output_size).models[config["model"]].to(device)
+    model = Models(dataset.num_input_tokens, dataset.encoding_size, dataset.output_size).models[config["model"]].to(
+        device)
 
     loss_func = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
@@ -58,6 +59,10 @@ def main():
     output_model_path = Path(config["work_dir"]) / config["model_path"]
     torch.save(model.state_dict(), output_model_path)
     logging.info(f"Model saved to {output_model_path}")
+
+    # visualization of the architecture
+    model_graph = draw_graph(model, input_size=(1, dataset.input_size), expand_nested=True)
+    model_graph.visual_graph.render(filename="model", format='pdf', directory=config["work_dir"])
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 numpy~=2.0.2
-torch~=2.6.0
-tensorflow~=2.18.0
-scikit-learn
 PyYAML
+scikit-learn
+tensorflow~=2.18.0
+torch~=2.6.0
+torchview
+
