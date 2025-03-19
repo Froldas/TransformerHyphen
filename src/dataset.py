@@ -1,11 +1,12 @@
 import logging
 import os
 import pickle
+import tensorflow as tf
 
 from pathlib import Path
-import tensorflow as tf
 from torch.utils.data import Dataset
 
+from src.utils import remove_hyphenation
 
 class HyphenationInterface:
     def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir):
@@ -72,7 +73,7 @@ class HyphenationDataset(Dataset, HyphenationInterface):
 
         self._read_dataset(data_file)
 
-        self.encoding = encoding(sorted(self.unique_letters))
+        self.encoding = encoding(self.words, self.unique_letters)
         self.letter_encoding = self.encoding.letter_encoding
         self.encoding_size = self.encoding.encoding_size
 
@@ -102,7 +103,7 @@ class HyphenationDataset(Dataset, HyphenationInterface):
             for line in f:
                 word = line.strip()
                 self.words.append(word)
-                word_without_hyphens = word.replace("-", "")
+                word_without_hyphens = remove_hyphenation(word)
 
                 self.unique_letters.update(list(word_without_hyphens))
                 self.longest_word = max(self.longest_word, word_without_hyphens, key=len)

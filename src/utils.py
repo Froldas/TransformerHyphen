@@ -6,8 +6,10 @@ import random
 import torch.nn as nn
 import yaml
 import sys
+
 from torch import no_grad, manual_seed
 
+from src.constants import HYPHENS
 
 def load_yaml_conf(path: str | os.PathLike):
     with open(path, encoding='utf8') as stream:
@@ -80,6 +82,10 @@ def validate(model: nn.Module, loss_func, validation_loader, device):
             loss = loss_func(predictions, batch_y)
             val_loss.append(float(loss))
         logging.info(f'Val loss: {np.mean(val_loss):.4f}')
+
+
+def remove_hyphenation(string):
+    return string.translate({ord(hyph): None for hyph in HYPHENS})
 
 
 def insert_hyphenation(string, bit_list):
