@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -17,7 +19,12 @@ YML_CONF_PATH = "configuration.yml"
 
 
 def main():
-    config = load_yaml_conf(Path(YML_CONF_PATH))
+    if len(sys.argv) > 1:
+        config = load_yaml_conf(Path(sys.argv[1]))
+    else:
+        config = load_yaml_conf(Path(YML_CONF_PATH))
+
+    os.makedirs(config["work_dir"], exist_ok=True)
 
     setup_logger(Path(config["work_dir"]) / config["training_log_path"])
     # Check if CUDA is available

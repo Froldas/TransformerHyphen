@@ -8,10 +8,11 @@ import yaml
 import sys
 from torch import no_grad, manual_seed
 
+
 def load_yaml_conf(path: str | os.PathLike):
-    with open(path) as stream:
+    with open(path, encoding='utf8') as stream:
         try:
-            return yaml.safe_load(stream)
+            return yaml.safe_load(stream, )
         except yaml.YAMLError as exc:
             print(exc)
 

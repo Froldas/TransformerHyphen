@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from torch import Tensor, load
 
-from src.dataset import HyphenationInterace
+from src.dataset import HyphenationInterface
 from src.ConfDict import Models, Encodings
 from src.utils import load_yaml_conf, insert_hyphenation
 
@@ -12,7 +12,7 @@ YML_CONF_PATH = "configuration.yml"
 
 def main():
     config = load_yaml_conf(Path(YML_CONF_PATH))
-    hyp_itf = HyphenationInterace.load_configuration(config["work_dir"], config["configuration_path"])
+    hyp_itf = HyphenationInterface.load_configuration(config["work_dir"], config["configuration_path"])
 
     model_path = Path(config["work_dir"]) / config["model_path"]
     loaded_model = Models(hyp_itf.num_input_tokens, hyp_itf.encoding_size, hyp_itf.output_size).models[config["model"]]

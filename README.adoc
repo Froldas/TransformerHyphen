@@ -8,6 +8,8 @@ Python version >= 3.12 required.
 
 `pip install -r requirements.txt`
 
+dot (needed by graphviz) is expected in your path
+
 == About
 
 Hyphenation using transformers
@@ -30,6 +32,11 @@ Also dumps all mispredicted words to a .txt file.
 INFERENCE: `inference.py <INPUT_STRING>`
 
 Runs inference using the last trained model on the input string.
+
+GRID_RUN: `grid_run.py`
+Alternatively, there is script `grid_run.py` where you can select which configuration superset will be run
+in a sequence.
+
 == Configuration space
 Using `configuration.yml` you can control what model architecture, encoding, learning rate and other parameters are used during all stages.
 
