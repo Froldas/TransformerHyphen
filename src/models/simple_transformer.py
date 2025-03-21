@@ -35,13 +35,13 @@ class SimpleTransformer(nn.Module):
         self.input_tokens = input_tokens
         self.embed_size = embed_size
         self.attention = SelfAttention(embed_size)
-        self.fc = nn.Linear(input_tokens*embed_size, hidden_size)
+        self.fc = nn.Linear(input_tokens * embed_size, hidden_size)
         self.fc_out = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         x = x.view(x.shape[0], self.input_tokens, -1)
         x = self.attention(x)
-        x = x.view(-1, self.input_tokens*self.embed_size)
+        x = x.view(-1, self.input_tokens * self.embed_size)
         #x = x.mean(dim=1)
         x = F.relu(self.fc(x))
         x = self.fc_out(x)

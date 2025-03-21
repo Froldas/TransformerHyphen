@@ -1,5 +1,9 @@
+import numpy as np
+
 from src.encoding import Encoding
 from typing import Any
+from sklearn.feature_extraction.text import CountVectorizer
+from src.utils import remove_hyphenation
 
 
 class SimpleEmbedding(Encoding):
@@ -18,13 +22,27 @@ class SimpleEmbedding(Encoding):
     def __init__(self, dataset: [str], unique_letters: [str]):
         self._letters = unique_letters
         self._letter_encoding = {}
-        self._encoding_size = 1
+        self._encoding_size = 32
         letter_count = len(self._letters)
-        spacing_between_letters = 1.0 / (letter_count - 1)
 
-        for idx, letter in enumerate(self._letters):
-            # + 1 here is to distinguish between letters and empty space
-            self.letter_encoding[letter] = [0.0 + (idx + 1) * spacing_between_letters]
+        vectorizer = CountVectorizer(analyzer='char', ngram_range=(1, 3), dtype=np.float32, max_features=32)
+        dataset = [remove_hyphenation(word) for word in dataset]
+        vectorizer.fit(dataset)
+
+        words_with_letter = {}
+        for letter in self._letters:
+            words_with_letter[letter] = []
+
+        for word in dataset:
+            for letter in self._letters:
+                if letter in word:
+                    words_with_letter[letter] += word
+
+        for letter in self._letters:
+            ngram_features = vectorizer.transform(words_with_letter[letter]).toarray()
+            self._letter_encoding[letter] = np.mean(ngram_features, axis=0)  # Aggregate embeddings
+ # Fallback
+
 
     @property
     def letters(self) -> [str]:

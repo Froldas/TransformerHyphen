@@ -2,7 +2,8 @@ from src.models.simple_mlp import SimpleMLP
 from src.models.simple_transformer import SimpleTransformer
 
 from src.encodings.binary import BinaryEncoding, OneHotEncoding
-#from src.encodings.word_embeddings import SimpleTransformer
+from src.encodings.embedding import SimpleEmbedding
+
 from src.encodings.float import SimpleFloatEncoding, AdvancedFloatEncoding
 
 """
@@ -29,4 +30,5 @@ class Encodings:
         self.encodings = {"binary": BinaryEncoding,
                           "one_hot": OneHotEncoding,
                           "simple_float": SimpleFloatEncoding,
-                          "advanced_float": AdvancedFloatEncoding}
+                          "advanced_float": AdvancedFloatEncoding,
+                          "simple_embedding": SimpleEmbedding}

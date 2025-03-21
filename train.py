@@ -40,8 +40,9 @@ def main():
 
     train_loader, val_loader = utils.split_dataset(dataset, config["train_split"], config["batch_size"])
 
-    model = Models(dataset.num_input_tokens, dataset.encoding_size, dataset.output_size).models[config["model"]].to(
-        device)
+    model = Models(dataset.num_input_tokens,
+                   dataset.encoding_size,
+                   dataset.output_size).models[config["model"]].to(device)
 
     loss_func = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
