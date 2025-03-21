@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 class Encoding(ABC):
     """
     Abstract Interface which encoding classes must implement

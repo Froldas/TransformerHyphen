@@ -1,13 +1,16 @@
 import logging
 import numpy as np
 import os
-import pathlib
 import random
 import torch.nn as nn
+import torch
 import yaml
 import sys
 
-from torch import no_grad, manual_seed
+from pathlib import Path
+from torch import no_grad, manual_seed, save
+from torch.utils.data import DataLoader
+from torchview import draw_graph
 
 from src.constants import HYPHENS
 
@@ -38,7 +41,7 @@ def setup_logger(log_path):
     """
 
     # remove all logging file
-    pathlib.Path.unlink(log_path, missing_ok=True)
+    Path.unlink(log_path, missing_ok=True)
 
     # Configure the logger
     logging.basicConfig(
@@ -50,8 +53,6 @@ def setup_logger(log_path):
             logging.StreamHandler(sys.stdout)
         ]
     )
-
-
 
 
 def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
@@ -103,3 +104,24 @@ def insert_hyphenation(string, bit_list):
     # Convert the list back to a string
     result_string = ''.join(string_list)
     return result_string
+
+
+def save_model(model, path: Path):
+    os.makedirs(path.parent, exist_ok=True)
+    save(model.state_dict(), path)
+    logging.info(f"Model saved to {path}")
+
+
+def visualize(model, dataset, work_dir):
+    model_graph = draw_graph(model, input_size=(1, dataset.input_size), expand_nested=True)
+    model_graph.visual_graph.render(filename="model", format='pdf', directory=work_dir)
+
+
+def split_dataset(dataset, train_split, batch_size):
+    train_size = int(train_split * len(dataset))
+    val_size = len(dataset) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+    return train_loader, val_loader

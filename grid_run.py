@@ -29,8 +29,8 @@ def run(config, run_index):
     cfg_name = WORK_DIR / f"temp_cfg_{run_index}.yml"
     create_config(config, cfg_name)
     print(f"Commencing training #{run_index}.")
-    subprocess.check_output(f"{sys.executable} train.py {cfg_name}", stderr=subprocess.DEVNULL)
-    subprocess.check_output(f"{sys.executable} evaluate.py {cfg_name}", stderr=subprocess.DEVNULL)
+    subprocess.check_call(f"{sys.executable} train.py {cfg_name}", stderr=subprocess.DEVNULL)
+    subprocess.check_call(f"{sys.executable} evaluate.py {cfg_name}", stderr=subprocess.DEVNULL)
 
 
 def main():

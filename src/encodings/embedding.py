@@ -4,7 +4,7 @@ from typing import Any
 
 class SimpleEmbedding(Encoding):
     """
-    Encodes all letters into float numbers. Space between encoding is based on the vocabulary size (unique letters)
+    Encodes all letters into embeddings
     space = 1.0 / (vocab_size - 1)
     f.e. space = 0.1 for vocab size 11
     _ -> 0.0
