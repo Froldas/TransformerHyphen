@@ -1,4 +1,4 @@
-= Transformer Hyphen
+= Transformer-Based Hyphenation
 
 :author: Froldas
 
@@ -8,28 +8,54 @@ Python version >= 3.12 required.
 
 `pip install -r requirements.txt`
 
+dot (needed by graphviz) is expected in your path
+
 == About
 
 Hyphenation using transformers
 
 === How to use
 
-There are three scripts which you can run.
+There are three stages which you can run.
 
-`train.py`
+TRAIN: `train.py`
 
 Runs training of the model and dumps the network files with its configuration.
-MUST BE RUN BEFORE ALL OTHER TASKS.
 
-`inference.py <INPUT_STRING>`
+WARNING: required to be run before all other stages.
 
-Runs inference using the last trained model on the input string.
-
-`evaluate.py`
+EVALUATE: `evaluate.py`
 
 Runs evaluation on the last trained model.
 Also dumps all mispredicted words to a .txt file.
+INFERENCE: `inference.py <INPUT_STRING>`
 
+Runs inference using the last trained model on the input string.
+
+GRID_RUN: `grid_run.py`
+Alternatively, there is script `grid_run.py` where you can select which configuration superset will be run
+in a sequence.
+
+== Configuration space
+Using `configuration.yml` you can control what model architecture, encoding, learning rate and other parameters are used during all stages.
+
+Here is the list of the most important ones:
+
+=== *model*
+
+`SimpleMLP` - regular fully connected multi-layer perceptron model
+
+`SimpleTransoformer` - self-attention layer followed by fully connected model
+
+=== *encoding*
+
+`binary` - letters are converted to a binary number based on their index
+
+`one_hot` - letters are converted to a one-hot vector based on their index
+
+`simple_float` - letters are converted to a single float with even spacing
+
+`advanced_float` - letters are converted to a single float with vowels and consonants grouped
 
 == TODOs
 nice to have: grid search parametry patgenu optimizace (srovnání apple to apple)

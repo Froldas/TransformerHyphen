@@ -1,15 +1,18 @@
 ---
 model: SimpleTransformer
+encoding: advanced_float
 seed: 42
-batch_size: 8
-num_epochs: 10
+batch_size: 32
+num_epochs: 5
 train_split: 0.9
 learning_rate: 0.001
 dataset: datasets/cs-ujc.wlh
 work_dir: build
 model_path: output_model.pth
-configuration_path: model_conf.pk
+configuration_path: conf.pk
 mispredict_path: wrong_predicted.txt
+training_log_path: training.log
 print_dataset_statistics: False
+fast_eval: True
 # early_stopping not working yet
 # early_stopping: True
