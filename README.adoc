@@ -29,3 +29,10 @@ Runs inference using the last trained model on the input string.
 
 Runs evaluation on the last trained model.
 Also dumps all mispredicted words to a .txt file.
+
+
+== TODOs
+nice to have: grid search parametry patgenu optimizace (srovnání apple to apple)
+
+velikost format file, zakomentovat českou, odkomentovat
+python module na načtení vzorů v unicode
