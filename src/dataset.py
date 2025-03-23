@@ -7,6 +7,7 @@ from pathlib import Path
 from torch.utils.data import Dataset
 
 from src.utils import remove_hyphenation
+from src.constants import HYPHENS
 
 class HyphenationInterface:
     def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir):
@@ -43,9 +44,9 @@ class HyphenationInterface:
 
     def _dump_configuration(self):
         data = {"num_input_tokens": self.num_input_tokens,
-                "encoding_size"   : self.encoding_size,
-                "output_size"     : self.output_size,
-                "letter_encoding" : self.letter_encoding}
+                "encoding_size": self.encoding_size,
+                "output_size": self.output_size,
+                "letter_encoding": self.letter_encoding}
 
         os.makedirs(Path(self.work_dir), exist_ok=True)
 
@@ -57,10 +58,10 @@ class HyphenationInterface:
         with open(Path(work_dir) / conf_path, "rb") as f:
             data = pickle.load(f)
         return HyphenationInterface(data["num_input_tokens"],
-                                   data["encoding_size"],
-                                   data["output_size"],
-                                   data["letter_encoding"],
-                                   Path("build"))
+                                    data["encoding_size"],
+                                    data["output_size"],
+                                    data["letter_encoding"],
+                                    Path("build"))
 
 
 class HyphenationDataset(Dataset, HyphenationInterface):
@@ -101,12 +102,28 @@ class HyphenationDataset(Dataset, HyphenationInterface):
     def _read_dataset(self, data_file_path):
         with open(data_file_path, 'r', encoding='utf-8') as f:
             for line in f:
-                word = line.strip()
-                self.words.append(word)
-                word_without_hyphens = remove_hyphenation(word)
+                # remove comments
+                word = line.split("#")[0]
+                # remove trailing space
+                word = word.strip()
+                # pick only relevant cases
+                word = word.split(";")[-1]
+                word = word.replace("==", "=")
+                for hyphen in HYPHENS:
+                    word = word.replace(hyphen, "-")
+                # lowercase
+                word = word.lower()
+                use_word = True
+                for letter in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "[", "]", "{", "}", "/"]:
+                    if letter in word:
+                        use_word = False
+                        continue
+                if use_word:
+                    self.words.append(word)
+                    word_without_hyphens = remove_hyphenation(word)
 
-                self.unique_letters.update(list(word_without_hyphens))
-                self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
+                    self.unique_letters.update(list(word_without_hyphens))
+                    self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
 
     def _print_info(self):
         logging.info(f"Input_size: {self.input_size}")

@@ -8,6 +8,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 from pathlib import Path
+from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score, recall_score
+from torch.utils.data import DataLoader, Subset
 
 from src.dataset import HyphenationDataset
 from src.ConfDict import Models, Encodings
@@ -38,7 +41,7 @@ def main():
                                  encoding=Encodings().encodings[config["encoding"]],
                                  print_info=config["print_dataset_statistics"])
 
-    train_loader, val_loader = utils.split_dataset(dataset, config["train_split"], config["batch_size"])
+    train_dataset, eval_dataset = utils.split_dataset(dataset, config["train_split"])
 
     model = Models(dataset.num_input_tokens,
                    dataset.encoding_size,
@@ -49,11 +52,41 @@ def main():
 
     # Training Loop
     num_epochs = config["num_epochs"]
+    kf = KFold(n_splits=num_epochs)
 
-    for epoch in range(num_epochs):
-        epoch_loss = utils.train_epoch(model, train_loader, optimizer, loss_func, device)
+    for epoch, (train_split_idx, val_split_idx) in enumerate(kf.split(range(len(train_dataset)))):
+        fold_train_subset = Subset(train_dataset, train_split_idx)
+        fold_val_subset = Subset(train_dataset, val_split_idx)
+
+        epoch_train_loader = DataLoader(fold_train_subset, batch_size=config["batch_size"], shuffle=True)
+        epoch_val_loader = DataLoader(fold_val_subset, batch_size=config["batch_size"])
+
+        epoch_loss = utils.train_epoch(model, epoch_train_loader, optimizer, loss_func, device)
         logging.info(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
-        utils.validate(model, loss_func, val_loader, device)
+        utils.validate(model, loss_func, epoch_val_loader, device)
+
+
+    X = []
+    y = []
+    for data_point in eval_dataset:
+        features, label = data_point
+        X.append(features)  # Convert features to NumPy array
+        y.append(label)
+
+    x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+
+    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy())
+    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                          average="samples")
+
+    with open(Path(config["work_dir"]) / "eval_metrics.log", "w+", encoding="utf-8") as f:
+
+        f.writelines(f"Metrics on unseen data:\n")
+        print(f"Metrics on unseen data:\n")
+        f.writelines(f"    Accuracy: {accuracy:.4f}\n")
+        print(f"    Accuracy: {accuracy:.4f}")
+        f.writelines(f"    Recall: {recall:.4f}\n")
+        print(f"    Recall: {recall:.4f}")
 
     utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
     utils.visualize(model, dataset, config["work_dir"])

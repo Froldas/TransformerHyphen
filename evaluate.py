@@ -37,10 +37,10 @@ def main():
         X.append(features)  # Convert features to NumPy array
         y.append(label)
 
-    y_pred = loaded_model(torch.Tensor(np.array(X)).to("cpu"))
+    x_pred = loaded_model(torch.Tensor(np.array(X)).to("cpu"))
 
-    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), y_pred.to("cpu").detach().numpy())
-    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), y_pred.to("cpu").detach().numpy(),average="samples")
+    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy())
+    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),average="samples")
 
     with open(Path(config["work_dir"]) / "eval_metrics.log", "w+", encoding="utf-8") as f:
         f.writelines(f"Accuracy: {accuracy:.4f}\n")
@@ -51,8 +51,8 @@ def main():
     if not config["fast_eval"]:
         with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
             for i in range(len(dataset)):
-                if not torch.equal(y_pred[i], torch.Tensor(y[i])):
-                    f.writelines(f"GT: {dataset.words[i]} | PRED: {insert_hyphenation(dataset.words[i].replace("-", ""), y_pred[i])}\n")
+                if not torch.equal(x_pred[i], torch.Tensor(y[i])):
+                    f.writelines(f"GT: {dataset.words[i]} | PRED: {insert_hyphenation(dataset.words[i].replace('-', ''), x_pred[i])}\n")
 
 
 if __name__ == "__main__":

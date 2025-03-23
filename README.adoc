@@ -58,7 +58,12 @@ Here is the list of the most important ones:
 `advanced_float` - letters are converted to a single float with vowels and consonants grouped
 
 == TODOs
-nice to have: grid search parametry patgenu optimizace (srovnání apple to apple)
+Study german dataset meaning of symbols
+shutil which dot (to prevent missing dot program)
+find out if efficiency means compression rate between OG dataset and the model
 
+
+nice to have: grid search parametry patgenu optimizace (srovnání apple to apple)
 velikost format file, zakomentovat českou, odkomentovat
 python module na načtení vzorů v unicode
+

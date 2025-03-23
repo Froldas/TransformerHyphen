@@ -9,8 +9,9 @@ import sys
 
 from pathlib import Path
 from torch import no_grad, manual_seed, save
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torchview import draw_graph
+from sklearn.model_selection import train_test_split
 
 from src.constants import HYPHENS
 
@@ -58,6 +59,7 @@ def setup_logger(log_path):
 def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
     model.train()
     epoch_loss = []
+
     for batch_X, batch_y in train_loader:
         batch_X, batch_y = batch_X.to(device), batch_y.to(device)
 
@@ -117,11 +119,9 @@ def visualize(model, dataset, work_dir):
     model_graph.visual_graph.render(filename="model", format='pdf', directory=work_dir)
 
 
-def split_dataset(dataset, train_split, batch_size):
-    train_size = int(train_split * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+def split_dataset(dataset, train_split):
+    train_dataset_idx, val_dataset_idx = train_test_split(list(range(len(dataset))), test_size=1.0-train_split)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size)
-    return train_loader, val_loader
+    train_dataset = Subset(dataset, train_dataset_idx)
+    val_dataset = Subset(dataset, val_dataset_idx)
+    return train_dataset, val_dataset
