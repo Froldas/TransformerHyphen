@@ -117,7 +117,7 @@ def save_model(model, path: Path):
 
 def visualize(model, dataset, work_dir):
     model_graph = draw_graph(model, input_size=(1, dataset.input_size), expand_nested=True)
-    model_graph.visual_graph.render(filename="model", format='pdf', directory=work_dir)
+    model_graph.visual_graph.render(filename="model", format='pdf', directory=work_dir, quiet=True)
 
 
 def split_dataset(dataset, train_split):
@@ -141,12 +141,12 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
     accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(),
                               x_pred.to("cpu").detach().numpy())
     recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                          average="samples")
+                          average="samples", zero_division=0.0)
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
     logging.info(f"Efficiency: {(dataset_size_kb / model_size_kb) * 100:.2f} %")
-    logging.info(f"    Dataset size is: {dataset_size_kb} KB")
+    logging.info(f"    Dataset size is: {dataset_size_kb:.2f} KB")
     logging.info(f"    {label} size: {model_size_kb:.2f} KB")
 
     logging.info(f"Metrics on unseen data:")
