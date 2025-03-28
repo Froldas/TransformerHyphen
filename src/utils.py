@@ -12,8 +12,9 @@ from torch import no_grad, manual_seed, save
 from torch.utils.data import DataLoader, Subset
 from torchview import draw_graph
 from sklearn.model_selection import train_test_split
-
+from sklearn.metrics import accuracy_score, recall_score
 from src.constants import HYPHENS
+
 
 def load_yaml_conf(path: str | os.PathLike):
     with open(path, encoding='utf8') as stream:
@@ -120,8 +121,41 @@ def visualize(model, dataset, work_dir):
 
 
 def split_dataset(dataset, train_split):
-    train_dataset_idx, val_dataset_idx = train_test_split(list(range(len(dataset))), test_size=1.0-train_split)
+    train_dataset_idx, val_dataset_idx = train_test_split(list(range(len(dataset))), test_size=1.0 - train_split)
 
     train_dataset = Subset(dataset, train_dataset_idx)
     val_dataset = Subset(dataset, val_dataset_idx)
     return train_dataset, val_dataset
+
+
+def model_size(model):
+    torch.save(model.state_dict(), "temp.pth")
+    size = os.path.getsize("temp.pth") / 1024  # Convert to KB
+    os.remove("temp.pth")
+    return size
+
+
+def model_evaluation(model, X, y, dataset, label="Full model"):
+    x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+
+    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(),
+                              x_pred.to("cpu").detach().numpy())
+    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                          average="samples")
+
+    dataset_size_kb = os.path.getsize(dataset) / 1024
+    model_size_kb = model_size(model)
+    logging.info(f"Efficiency: {(dataset_size_kb / model_size_kb) * 100:.2f} %")
+    logging.info(f"    Dataset size is: {dataset_size_kb} KB")
+    logging.info(f"    {label} size: {model_size_kb:.2f} KB")
+
+    logging.info(f"Metrics on unseen data:")
+    logging.info(f"    {label} accuracy: {accuracy:.4f}")
+    logging.info(f"    {label} recall: {recall:.4f}")
+
+
+def quantize_model(model):
+    quantized_model = torch.quantization.quantize_dynamic(
+        model, {nn.Linear}, dtype=torch.qint8  # Quantize Linear layers to int8
+    )
+    return quantized_model

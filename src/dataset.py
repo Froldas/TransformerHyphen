@@ -105,6 +105,9 @@ class HyphenationDataset(Dataset, HyphenationInterface):
                 # remove trailing space and convert to lowercase
                 word = word.strip().lower()
 
+                for hyphen in HYPHENS:
+                    word = word.replace(hyphen, "-")
+
                 self.words.append(word)
                 word_without_hyphens = remove_hyphenation(word)
 
