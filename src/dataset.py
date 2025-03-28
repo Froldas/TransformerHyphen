@@ -101,29 +101,15 @@ class HyphenationDataset(Dataset, HyphenationInterface):
 
     def _read_dataset(self, data_file_path):
         with open(data_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                # remove comments
-                word = line.split("#")[0]
-                # remove trailing space
-                word = word.strip()
-                # pick only relevant cases
-                word = word.split(";")[-1]
-                word = word.replace("==", "=")
-                for hyphen in HYPHENS:
-                    word = word.replace(hyphen, "-")
-                # lowercase
-                word = word.lower()
-                use_word = True
-                for letter in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "[", "]", "{", "}", "/"]:
-                    if letter in word:
-                        use_word = False
-                        continue
-                if use_word:
-                    self.words.append(word)
-                    word_without_hyphens = remove_hyphenation(word)
+            for word in f:
+                # remove trailing space and convert to lowercase
+                word = word.strip().lower()
 
-                    self.unique_letters.update(list(word_without_hyphens))
-                    self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
+                self.words.append(word)
+                word_without_hyphens = remove_hyphenation(word)
+
+                self.unique_letters.update(list(word_without_hyphens))
+                self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
 
     def _print_info(self):
         logging.info(f"Input_size: {self.input_size}")
