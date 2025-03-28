@@ -72,7 +72,51 @@ class AdvancedFloatEncoding(Encoding):
                 # add vowels
                 self.letter_encoding[letter] = [0.0 - (idx + 1) * spacing_between_letters]
 
+    @property
+    def letters(self) -> [str]:
+        return self._letters
 
+    @property
+    def letter_encoding(self) -> dict[str, [Any]]:
+        return self._letter_encoding
+
+    @property
+    def encoding_size(self) -> int:
+        return self._encoding_size
+
+class AdvancedFloatEncoding2(Encoding):
+
+    def __init__(self,  dataset: [str], unique_letters: [str]):
+        self._letters = unique_letters
+        self._letter_encoding = {}
+        self._encoding_size = 1
+
+        letter_count = len(self._letters)
+
+        spacing_ratio_between_vowels_consonants = 10
+        spacing_between_letters = 1.0 / (letter_count - 1 + spacing_ratio_between_vowels_consonants)
+
+        split_organized_letters = []
+        vowel_count = 0
+        for letter in self._letters:
+            if letter in VOWELS:
+                split_organized_letters.insert(0, letter)
+                vowel_count += 1
+            else:
+                split_organized_letters.append(letter)
+
+        for idx, letter in enumerate(split_organized_letters):
+            if idx >= vowel_count:
+                if letter == "l":
+                    self.letter_encoding[letter] = [0.0 - 2*spacing_between_letters]
+                elif letter == "r":
+                    self.letter_encoding[letter] = [0.0 - 3*spacing_between_letters]
+                else:
+                    # add consonants (one extra space between consonants and vowels
+                    self.letter_encoding[letter] = [1.0 - (idx - vowel_count) * spacing_between_letters]
+            else:
+                # add vowels
+                self.letter_encoding[letter] = [-1.0 + (idx) * spacing_between_letters]
 
     @property
     def letters(self) -> [str]:
