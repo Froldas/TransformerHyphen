@@ -65,6 +65,10 @@ def main():
         logging.info(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
         utils.validate(model, loss_func, epoch_val_loader, device)
 
+    # Apply Dynamic Quantization (Converts Linear Layers to int8)
+    quantized_model = torch.quantization.quantize_dynamic(
+    model, {nn.Linear}, dtype=torch.qint8  # Quantize Linear layers to int8
+    )
 
     X = []
     y = []
@@ -73,23 +77,44 @@ def main():
         X.append(features)  # Convert features to NumPy array
         y.append(label)
 
-    x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+    full_x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+    quant_x_pred = quantized_model(torch.Tensor(np.array(X)).to("cpu"))
 
-    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy())
-    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                          average="samples")
+    full_accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(),
+                                   full_x_pred.to("cpu").detach().numpy())
+    full_recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), full_x_pred.to("cpu").detach().numpy(),
+                               average="samples")
+    quant_accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(),
+                                    quant_x_pred.to("cpu").detach().numpy())
+    quant_recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(),
+                                quant_x_pred.to("cpu").detach().numpy(),
+                                average="samples")
 
-    with open(Path(config["work_dir"]) / "eval_metrics.log", "w+", encoding="utf-8") as f:
-
-        f.writelines(f"Metrics on unseen data:\n")
-        print(f"Metrics on unseen data:\n")
-        f.writelines(f"    Accuracy: {accuracy:.4f}\n")
-        print(f"    Accuracy: {accuracy:.4f}")
-        f.writelines(f"    Recall: {recall:.4f}\n")
-        print(f"    Recall: {recall:.4f}")
-
+    utils.save_model(quantized_model, Path(config["work_dir"]) / config["model_path"])
+    utils.visualize(model, dataset, config["work_dir"])
     utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
     utils.visualize(model, dataset, config["work_dir"])
+
+    with open(Path(config["work_dir"]) / "eval_metrics.log", "w+", encoding="utf-8") as f:
+        f.writelines(f"Metrics on unseen data:\n")
+        print(f"Metrics on unseen data:\n")
+        f.writelines(f"    FULL Accuracy: {full_accuracy:.4f}\n")
+        print(f"    FULL Accuracy: {full_accuracy:.4f}")
+        f.writelines(f"    FULL Recall: {full_recall:.4f}\n")
+        print(f"    FULL Recall: {full_recall:.4f}")
+        f.writelines(f"    QUANTIZED Accuracy: {quant_accuracy:.4f}\n")
+        print(f"    QUANTIZED Accuracy: {quant_accuracy:.4f}")
+        f.writelines(f"    QUANTIZED Recall: {quant_recall:.4f}\n")
+        print(f"    QUANTIZED Recall: {quant_recall:.4f}")
+
+    def model_size(model):
+        torch.save(model.state_dict(), "temp.pth")
+        size = os.path.getsize("temp.pth") / 1024  # Convert to KB
+        os.remove("temp.pth")
+        return size
+
+    print(f"Original Model Size: {model_size(model):.2f} KB")
+    print(f"Quantized Model Size: {model_size(quantized_model):.2f} KB")
 
 
 if __name__ == "__main__":
