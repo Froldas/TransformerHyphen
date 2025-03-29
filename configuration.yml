@@ -1,18 +1,24 @@
 ---
-model: SimpleTransformer
-encoding: advanced_float
+model: SimpleMLP
+encoding: binary
 seed: 42
 batch_size: 32
-num_epochs: 5
+num_epochs: 20
 train_split: 0.9
 learning_rate: 0.001
-dataset: datasets/cs-ujc.wlh
+
+# paths
+dataset: datasets/cs-all-cstenten.wlh
 work_dir: build
 model_path: output_model.pth
 configuration_path: conf.pk
 mispredict_path: wrong_predicted.txt
 training_log_path: training.log
+
+# misc settings
+generate_mispredicted: True
 print_dataset_statistics: False
-fast_eval: True
+patgen: True
+
 # early_stopping not working yet
 # early_stopping: True

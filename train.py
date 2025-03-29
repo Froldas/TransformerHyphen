@@ -11,7 +11,7 @@ import torch.optim as optim
 import src.utils as utils
 from src.ConfDict import Models, Encodings
 from src.dataset import HyphenationDataset
-from src.patgen import train_patgen
+from src.patgen import train_patgen, eval_patgen
 
 YML_CONF_PATH = "configuration.yml"
 
@@ -37,9 +37,10 @@ def main():
                                  encoding=Encodings().encodings[config["encoding"]],
                                  print_info=config["print_dataset_statistics"])
 
-    train_dataset, eval_dataset = utils.split_dataset(dataset, config["train_split"])
-
-    train_patgen(config["dataset"], config["work_dir"], "final_patterns")
+    # note: patgen requires dumping the datasets
+    train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
+                                                      work_dir=config["work_dir"],
+                                                      dump_datasets=config["patgen"])
 
     model = Models(dataset.num_input_tokens,
                    dataset.encoding_size,
@@ -64,13 +65,20 @@ def main():
 
     X = []
     y = []
-    for data_point in eval_dataset:
+    for data_point in test_dataset:
         features, label = data_point
         X.append(features)  # Convert features to NumPy array
         y.append(label)
 
     utils.model_evaluation(model, X, y, config["dataset"], label="Original model")
     utils.model_evaluation(quantized_model, X, y, config["dataset"], label="Quantized model")
+
+    if config["patgen"]:
+        train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", Path(config["work_dir"]) / "patgen", "final_patterns.tex")
+        eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh",
+                    Path(config["work_dir"]) / "patgen",
+                    "patgen_mispredicted.txt",
+                    hyp_tf=dataset)
 
 
 if __name__ == "__main__":

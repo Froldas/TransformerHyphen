@@ -66,6 +66,7 @@ class HyphenationInterface:
 
 class HyphenationDataset(Dataset, HyphenationInterface):
     def __init__(self, data_file, work_dir, encoding=None, print_info=False):
+        self.data_file = data_file
         self.unique_letters = set()
         self.longest_word = ""
         self.words = []

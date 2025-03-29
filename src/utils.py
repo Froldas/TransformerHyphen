@@ -125,11 +125,23 @@ def visualize(model, dataset, work_dir):
     model_graph.visual_graph.render(filename="model", format='pdf', directory=work_dir, quiet=True)
 
 
-def split_dataset(dataset, train_split):
-    train_dataset_idx, val_dataset_idx = train_test_split(list(range(len(dataset))), test_size=(1.0 - train_split))
+def dump_dataset(dataset, indices, output_path):
+    Path.unlink(output_path, missing_ok=True)
+    with open(output_path, "w+", encoding="utf-8") as f:
+        for index in indices:
+            f.writelines(f"{dataset.words[index]}\n")
+
+
+def split_dataset(dataset, train_split, work_dir=None, dump_datasets=False):
+    train_dataset_idx, test_dataset_idx = train_test_split(list(range(len(dataset))), test_size=(1.0 - train_split))
 
     train_dataset = Subset(dataset, train_dataset_idx)
-    val_dataset = Subset(dataset, val_dataset_idx)
+    val_dataset = Subset(dataset, test_dataset_idx)
+
+    if dump_datasets:
+        dump_dataset(dataset, train_dataset_idx, Path(work_dir) / "train_dataset.wlh")
+        dump_dataset(dataset, test_dataset_idx, Path(work_dir) / "test_dataset.wlh")
+
     return train_dataset, val_dataset
 
 
@@ -152,14 +164,13 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
-    logging.info(f"Efficiency: {(dataset_size_kb / model_size_kb) * 100:.2f} %")
+    logging.info(f"{label} evaluation: ")
     logging.info(f"    Dataset size is: {dataset_size_kb:.2f} KB")
     logging.info(f"    {label} size: {model_size_kb:.2f} KB")
-
-    logging.info(f"Metrics on unseen data:")
-    logging.info(f"    {label} accuracy: {accuracy:.4f}")
-    logging.info(f"    {label} recall: {recall:.4f}")
-    logging.info(f"    {label} precision: {precision:.4f}")
+    logging.info(f"    {label} Efficiency: {(dataset_size_kb / model_size_kb) * 100:.2f} %")
+    logging.info(f"    {label} Accuracy: {accuracy:.4f}")
+    logging.info(f"    {label} Recall: {recall:.4f}")
+    logging.info(f"    {label} Precision: {precision:.4f}")
 
 
 def model_training(model, train_dataset, num_epochs, optimizer, loss_func, batch_size, device):

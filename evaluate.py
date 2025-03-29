@@ -10,7 +10,6 @@ from src.dataset import HyphenationDataset, HyphenationInterface
 from src.ConfDict import Models, Encodings
 from src.utils import load_yaml_conf, insert_hyphenation
 
-
 YML_CONF_PATH = "configuration.yml"
 
 
@@ -40,7 +39,8 @@ def main():
     x_pred = loaded_model(torch.Tensor(np.array(X)).to("cpu"))
 
     accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy())
-    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),average="samples")
+    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                          average="samples")
 
     with open(Path(config["work_dir"]) / "eval_metrics.log", "w+", encoding="utf-8") as f:
         f.writelines(f"Accuracy: {accuracy:.4f}\n")
@@ -48,11 +48,12 @@ def main():
         f.writelines(f"Recall: {recall:.4f}\n")
         print(f"Recall: {recall:.4f}")
 
-    if not config["fast_eval"]:
+    if config["generate_mispredicted"]:
         with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
             for i in range(len(dataset)):
                 if not torch.equal(x_pred[i], torch.Tensor(y[i])):
-                    f.writelines(f"GT: {dataset.words[i]} | PRED: {insert_hyphenation(dataset.words[i].replace('-', ''), x_pred[i])}\n")
+                    f.writelines(
+                        f"GT: {dataset.words[i]} | PRED: {insert_hyphenation(dataset.words[i].replace('-', ''), x_pred[i])}\n")
 
 
 if __name__ == "__main__":
