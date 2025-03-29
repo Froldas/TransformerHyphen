@@ -1,4 +1,5 @@
 numpy~=2.0.2
+pypatgen
 PyYAML
 scikit-learn
 tensorflow~=2.18.0

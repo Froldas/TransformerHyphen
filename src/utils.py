@@ -11,8 +11,8 @@ from pathlib import Path
 from torch import no_grad, manual_seed, save
 from torch.utils.data import DataLoader, Subset
 from torchview import draw_graph
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, recall_score
+from sklearn.model_selection import KFold, train_test_split
+from sklearn.metrics import accuracy_score, recall_score, precision_score
 from src.constants import HYPHENS
 
 
@@ -37,12 +37,17 @@ def set_seed(seed: int):
 
 def setup_logger(log_path):
     """
-    Setup the logger and remove all logs
+    Set up the logger and remove all logs
     :param log_path: filepath to the logging file
     :return: None
     """
 
-    # remove all logging file
+    # remove all logging set up before
+
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    # clean the previous log file if exists
     Path.unlink(log_path, missing_ok=True)
 
     # Configure the logger
@@ -121,7 +126,7 @@ def visualize(model, dataset, work_dir):
 
 
 def split_dataset(dataset, train_split):
-    train_dataset_idx, val_dataset_idx = train_test_split(list(range(len(dataset))), test_size=1.0 - train_split)
+    train_dataset_idx, val_dataset_idx = train_test_split(list(range(len(dataset))), test_size=(1.0 - train_split))
 
     train_dataset = Subset(dataset, train_dataset_idx)
     val_dataset = Subset(dataset, val_dataset_idx)
@@ -142,6 +147,8 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
                               x_pred.to("cpu").detach().numpy())
     recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
                           average="samples", zero_division=0.0)
+    precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                                average="samples", zero_division=0.0)
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
@@ -152,6 +159,21 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
     logging.info(f"Metrics on unseen data:")
     logging.info(f"    {label} accuracy: {accuracy:.4f}")
     logging.info(f"    {label} recall: {recall:.4f}")
+    logging.info(f"    {label} precision: {precision:.4f}")
+
+
+def model_training(model, train_dataset, num_epochs, optimizer, loss_func, batch_size, device):
+    kf = KFold(n_splits=num_epochs)
+    for epoch, (train_split_idx, val_split_idx) in enumerate(kf.split(range(len(train_dataset)))):
+        fold_train_subset = Subset(train_dataset, train_split_idx)
+        fold_val_subset = Subset(train_dataset, val_split_idx)
+
+        epoch_train_loader = DataLoader(fold_train_subset, batch_size=batch_size, shuffle=True)
+        epoch_val_loader = DataLoader(fold_val_subset, batch_size=batch_size)
+
+        epoch_loss = train_epoch(model, epoch_train_loader, optimizer, loss_func, device)
+        logging.info(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
+        validate(model, loss_func, epoch_val_loader, device)
 
 
 def quantize_model(model):
