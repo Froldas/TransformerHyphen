@@ -3,7 +3,7 @@ model: SimpleMLP
 encoding: binary
 seed: 42
 batch_size: 32
-num_epochs: 20
+num_epochs: 10
 train_split: 0.9
 learning_rate: 0.001
 
@@ -17,8 +17,10 @@ training_log_path: training.log
 
 # misc settings
 generate_mispredicted: True
+generate_mispredicted: False
 print_dataset_statistics: False
 patgen: True
+patgen_force_rebuild: False
 
 # early_stopping not working yet
 # early_stopping: True

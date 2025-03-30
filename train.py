@@ -74,7 +74,8 @@ def main():
     utils.model_evaluation(quantized_model, X, y, config["dataset"], label="Quantized model")
 
     if config["patgen"]:
-        train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", Path(config["work_dir"]) / "patgen", "final_patterns.tex")
+        if config["patgen_force_rebuild"]:
+            train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", Path(config["work_dir"]) / "patgen", "final_patterns.tex")
         eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh",
                     Path(config["work_dir"]) / "patgen",
                     "patgen_mispredicted.txt",

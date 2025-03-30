@@ -18,9 +18,10 @@ class Models:
     All models must inherit from torch.nn.Module
     """
     def __init__(self, input_tokens, embedding_size, output_size):
-        self.models = {"SimpleMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=64, output_size=output_size),
+        self.models = {"SimpleMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=32, output_size=output_size),
                        "SimpleLargeMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=512, output_size=output_size),
-                       "SimpleTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=32, output_size=output_size)}
+                       "SimpleTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=32, output_size=output_size),
+                       "SimpleLargeTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=512, output_size=output_size)}
 
 
 class Encodings:
