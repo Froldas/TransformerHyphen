@@ -9,12 +9,12 @@ import yaml
 from pathlib import Path
 from src.utils import load_yaml_conf
 
-# ["SimpleTransformer", "SimpleMLP"]
-MODELS = ["SimpleTransformer", "SimpleMLP"]
+# ["SimpleTransformer", "SimpleMLP", "SimpleTransformerResidual", "SimpleTransformerMasked"]
+MODELS = ["SimpleTransformer", "SimpleTransformerResidual", "SimpleTransformerMasked"]
 # ["binary", "one_hot", "simple_float", "advanced_float"]
-ENCODINGS = ["binary",  "advanced_float", "one_hot"]
-# ["datasets/cs-ujc.wlh", "datasets/cs-all-cstenten.wlh"]
-DATASETS = ["datasets/cs-ujc.wlh"]
+ENCODINGS = ["binary"]
+# ["datasets/cs-ujc.wlh", "datasets/cs-all-cstenten.wlh", "datasets/wortliste.wlh"]
+DATASETS = ["datasets/cs-all-cstenten.wlh"]
 YML_CONF_PATH = "configuration.yml"
 WORK_DIR = Path("grid_work")
 

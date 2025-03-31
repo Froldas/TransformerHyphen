@@ -12,7 +12,7 @@ from torch import no_grad, manual_seed, save
 from torch.utils.data import DataLoader, Subset
 from torchview import draw_graph
 from sklearn.model_selection import KFold, train_test_split
-from sklearn.metrics import accuracy_score, recall_score, precision_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 from src.constants import HYPHENS
 
 
@@ -161,6 +161,7 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
                           average="samples", zero_division=0.0)
     precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
                                 average="samples", zero_division=0.0)
+    f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy())
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
@@ -171,6 +172,7 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
     logging.info(f"    {label} Accuracy: {accuracy:.4f}")
     logging.info(f"    {label} Recall: {recall:.4f}")
     logging.info(f"    {label} Precision: {precision:.4f}")
+    logging.info(f"    {label} F1: {f1:.4f}")
 
 
 def model_training(model, train_dataset, num_epochs, optimizer, loss_func, batch_size, device):
@@ -192,3 +194,29 @@ def quantize_model(model):
         model, {nn.Linear}, dtype=torch.qint8  # Quantize Linear layers to int8
     )
     return quantized_model
+
+
+def create_sliding_window_mask(seq_len, window_size):
+    """
+    Creates a mask for a sequence where each position attends to itself and
+    'window_size' positions before and after it.
+
+    Args:
+        seq_len (int): Length of the sequence.
+        window_size (int): Number of positions before and after to attend to.
+
+    Returns:
+        torch.Tensor: The attention mask of shape (seq_len, seq_len).
+    """
+    # Initialize the mask with zeros
+    mask = torch.zeros(seq_len, seq_len)
+
+    # Apply the sliding window constraint
+    for i in range(seq_len):
+        # Mask out positions outside the window [i - window_size, i + window_size]
+        if i - window_size > 0:
+            mask[i, :i - window_size] = float('-inf')
+        if i + window_size + 1 < seq_len:
+            mask[i, i + window_size + 1:] = float('-inf')
+
+    return mask
