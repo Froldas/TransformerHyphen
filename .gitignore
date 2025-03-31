@@ -7,6 +7,7 @@ __pycache__/
 .Python
 build/
 grid_work/
+patgen_results/
 develop-eggs/
 dist/
 downloads/
