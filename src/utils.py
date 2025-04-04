@@ -161,7 +161,7 @@ def model_evaluation(model, X, y, dataset, label="Full model"):
                           average="samples", zero_division=0.0)
     precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
                                 average="samples", zero_division=0.0)
-    f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy())
+    f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(), average="samples", zero_division=0.0)
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)

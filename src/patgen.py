@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 import tensorflow as tf
 from src.utils import remove_hyphenation
-from sklearn.metrics import accuracy_score, recall_score, precision_score
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 
 # sequence of the
 # * selector arguments triplets
@@ -15,14 +15,14 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score
 
 # format of each entry is: [(good, bad, threshold),(start, finish)]
 # More info about the entries: https://mirrors.nic.cz/tex-archive/info/patgen2-tutorial/patgen2-tutorial.pdf
-PATTENN_SELECTORS = [[(1, 4, 20), (1, 3)],  #1 hyphenation
+PATGEN_SELECTORS = [[(1, 4, 20), (1, 3)],  #1 hyphenation
                      [(1, 2, 5), (1, 3)],  #2 inhibiting
                      [(1, 2, 5), (1, 4)],  #3 hyphenation
                      [(1, 1, 2), (1, 4)],  #4 inhibiting
-                     [(1, 1, 2), (1, 5)],  #5 hyphenation
-                     [(1, 1, 1), (1, 5)],  #3 inhibiting
-                     [(1, 1, 1), (1, 6)],  #7 hyphenation
-                     [(1, 1, 1), (1, 6)],  #8 inhibiting
+                     #[(1, 1, 2), (1, 5)],  #5 hyphenation
+                     #[(1, 1, 1), (1, 5)],  #3 inhibiting
+                    # [(1, 1, 1), (1, 6)],  #7 hyphenation
+                    # [(1, 1, 1), (1, 6)],  #8 inhibiting
                      ]
 
 
@@ -39,7 +39,7 @@ def train_patgen(dataset, work_dir, output_filename):
     args += [str(dataset)]
     subprocess.check_call(" ".join(args))
 
-    for selector, lengths in PATTENN_SELECTORS:
+    for selector, lengths in PATGEN_SELECTORS:
         args = common_args.copy()
         args += ["train"]
         args += ["-r", f"{lengths[0]}-{lengths[1]}"]
@@ -102,6 +102,7 @@ def eval_patgen(dataset, work_dir, output_filename, hyp_tf):
     accuracy = accuracy_score(ground_truth, prediction)
     recall = recall_score(ground_truth, prediction, average="samples", zero_division=0.0)
     precision = precision_score(ground_truth, prediction, average="samples", zero_division=0.0)
+    f1 = f1_score(ground_truth, prediction, average="samples", zero_division=0.0)
 
     dataset_size_kb = os.path.getsize(hyp_tf.data_file) / 1024
     patgen_size_kb = os.path.getsize(Path(work_dir) / output_filename) / 1024
@@ -112,6 +113,7 @@ def eval_patgen(dataset, work_dir, output_filename, hyp_tf):
     logging.info(f"    Patgen Accuracy: {accuracy:.4f}")
     logging.info(f"    Patgen Recall: {recall:.4f}")
     logging.info(f"    Patgen Precision: {precision:.4f}")
+    logging.info(f"    Patgen F1: {f1:.4f}")
 
 
 
