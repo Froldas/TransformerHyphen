@@ -4,6 +4,7 @@ import os
 import random
 import torch.nn as nn
 import torch
+import tensorflow as tf
 import yaml
 import sys
 
@@ -152,16 +153,29 @@ def model_size(model):
     return size
 
 
-def model_evaluation(model, X, y, dataset, label="Full model"):
-    x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_window=False):
+    x_pred = model.cpu()((torch.Tensor(np.array(X))).cpu())
 
     accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(),
                               x_pred.to("cpu").detach().numpy())
-    recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                          average="samples", zero_division=0.0)
-    precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                                average="samples", zero_division=0.0)
-    f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(), average="samples", zero_division=0.0)
+
+    if sliding_window:
+        recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                              zero_division=0.0)
+        precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                                    zero_division=0.0)
+        f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                      zero_division=0.0)
+    else:
+        recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                              average="samples",
+                              zero_division=0.0)
+        precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                                    average="samples",
+                                    zero_division=0.0)
+        f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
+                      average="samples",
+                      zero_division=0.0)
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
@@ -220,3 +234,43 @@ def create_sliding_window_mask(seq_len, window_size):
             mask[i, i + window_size + 1:] = float('-inf')
 
     return mask
+
+
+def sliding_windows(string, padding=3, padding_char=' '):
+    result = []
+    filtered_indices = [i for i, c in enumerate(string) if c != '-']
+    window_size = 2 * padding + 1
+
+    for center_idx in range(len(filtered_indices)):
+        center_pos = filtered_indices[center_idx]
+        # Build a list of valid positions for the window
+        window_positions = []
+
+        # Grab left padding
+        i = center_idx - 1
+        while len(window_positions) < padding and i >= 0:
+            window_positions.insert(0, filtered_indices[i])
+            i -= 1
+        while len(window_positions) < padding:
+            window_positions.insert(0, None)  # pad left
+
+        # Add center character
+        window_positions.append(center_pos)
+
+        # Grab right padding
+        i = center_idx + 1
+        while len(window_positions) < window_size and i < len(filtered_indices):
+            window_positions.append(filtered_indices[i])
+            i += 1
+        while len(window_positions) < window_size:
+            window_positions.append(None)  # pad right
+
+        # Build the chunk
+        chunk = ''.join(string[pos] if pos is not None else padding_char for pos in window_positions)
+
+        # Determine label
+        label = 1.0 if center_pos + 1 < len(string) and string[center_pos + 1] == '-' else 0.0
+        label = tf.constant([label], dtype=tf.float32).numpy()
+        result.append((chunk, label))
+
+    return result

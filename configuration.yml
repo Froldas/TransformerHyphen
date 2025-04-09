@@ -1,9 +1,10 @@
 ---
-model: SimpleMLP
-encoding: binary
+model: SimpleTransformerResidual
+sliding_window: False
+encoding: advanced_binary
 seed: 42
 batch_size: 32
-num_epochs: 10
+num_epochs: 5
 train_split: 0.9
 learning_rate: 0.001
 
@@ -16,10 +17,9 @@ mispredict_path: wrong_predicted.txt
 training_log_path: training.log
 
 # misc settings
-generate_mispredicted: True
 generate_mispredicted: False
 print_dataset_statistics: False
-patgen: True
+patgen: False
 patgen_force_rebuild: False
 
 # early_stopping not working yet

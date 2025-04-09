@@ -6,8 +6,9 @@ import tensorflow as tf
 from pathlib import Path
 from torch.utils.data import Dataset
 
-from src.utils import remove_hyphenation
+from src.utils import remove_hyphenation, sliding_windows
 from src.constants import HYPHENS
+
 
 class HyphenationInterface:
     def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir):
@@ -97,6 +98,72 @@ class HyphenationDataset(Dataset, HyphenationInterface):
             input_vector = self.encode(word_without_hyphens)
             label = self.convert_word_to_expected_output(word)
             self.datapoints.append((input_vector, label))
+
+        self._dump_configuration()
+
+    def _read_dataset(self, data_file_path):
+        with open(data_file_path, 'r', encoding='utf-8') as f:
+            for word in f:
+                # remove trailing space and convert to lowercase
+                word = word.strip().lower()
+
+                for hyphen in HYPHENS:
+                    word = word.replace(hyphen, "-")
+
+                self.words.append(word)
+                word_without_hyphens = remove_hyphenation(word)
+
+                self.unique_letters.update(list(word_without_hyphens))
+                self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
+
+    def _print_info(self):
+        logging.info(f"Input_size: {self.input_size}")
+        logging.info(f"Number of unique letters: {len(self.unique_letters)}")
+        logging.info(f"Unique letters: {sorted(self.unique_letters)}")
+        logging.info(f"Longest word: {self.longest_word}")
+        logging.info(f"Letter encoding: {self.letter_encoding}")
+
+    def __len__(self):
+        return len(self.words)
+
+    def __getitem__(self, idx):
+        return self.datapoints[idx]
+
+
+class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
+    def __init__(self, data_file, work_dir, encoding=None, context_size=3, print_info=False):
+        self.data_file = data_file
+        self.unique_letters = set()
+        self.longest_word = ""
+        self.words = []
+        self.letter_encoding = {}
+        self.datapoints = []
+
+        window_size = 2 * context_size + 1
+
+        self._read_dataset(data_file)
+        self.encoding = encoding(self.words, self.unique_letters)
+        self.letter_encoding = self.encoding.letter_encoding
+        self.encoding_size = self.encoding.encoding_size
+
+        self.input_size = window_size * self.encoding_size
+        self.output_size = 1
+
+        if print_info:
+            self._print_info()
+
+        super().__init__(
+            window_size,
+            self.encoding_size,
+            self.output_size,
+            self.letter_encoding,
+            work_dir)
+
+        for word in self.words:
+            chunks = sliding_windows(word)
+            for input_substring, label in chunks:
+                input_vector = self.encode(remove_hyphenation(input_substring))
+                self.datapoints.append((input_vector, label))
 
         self._dump_configuration()
 

@@ -41,7 +41,6 @@ class SimpleEmbedding(Encoding):
         for letter in self._letters:
             ngram_features = vectorizer.transform(words_with_letter[letter]).toarray()
             self._letter_encoding[letter] = np.mean(ngram_features, axis=0)  # Aggregate embeddings
- # Fallback
 
 
     @property

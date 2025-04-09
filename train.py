@@ -10,7 +10,7 @@ import torch.optim as optim
 
 import src.utils as utils
 from src.ConfDict import Models, Encodings
-from src.dataset import HyphenationDataset
+from src.dataset import HyphenationDataset, HyphenationDatasetSlidingWindow
 from src.patgen import train_patgen, eval_patgen
 
 YML_CONF_PATH = "configuration.yml"
@@ -26,16 +26,22 @@ def main():
 
     utils.setup_logger(Path(config["work_dir"]) / config["training_log_path"])
     # Check if CUDA is available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"  #torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"Using device: {device}")
     # set seed for reproducibility
     utils.set_seed(config["seed"])
 
     # Create datasets and dataloaders
-    dataset = HyphenationDataset(data_file=config["dataset"],
-                                 work_dir=config["work_dir"],
-                                 encoding=Encodings().encodings[config["encoding"]],
-                                 print_info=config["print_dataset_statistics"])
+    if config["sliding_window"]:
+        dataset = HyphenationDatasetSlidingWindow(data_file=config["dataset"],
+                                                  work_dir=config["work_dir"],
+                                                  encoding=Encodings().encodings[config["encoding"]],
+                                                  print_info=config["print_dataset_statistics"])
+    else:
+        dataset = HyphenationDataset(data_file=config["dataset"],
+                                                  work_dir=config["work_dir"],
+                                                  encoding=Encodings().encodings[config["encoding"]],
+                                                  print_info=config["print_dataset_statistics"])
 
     # note: patgen requires dumping the datasets
     train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
@@ -70,12 +76,15 @@ def main():
         X.append(features)  # Convert features to NumPy array
         y.append(label)
 
-    utils.model_evaluation(model, X, y, config["dataset"], label="Original model")
-    utils.model_evaluation(quantized_model, X, y, config["dataset"], label="Quantized model")
+    utils.model_evaluation(model, X, y, config["dataset"], device, label="Original model",
+                           sliding_window=config["sliding_window"])
+    utils.model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
+                           sliding_window=config["sliding_window"])
 
     if config["patgen"]:
         if config["patgen_force_rebuild"]:
-            train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", Path(config["work_dir"]) / "patgen", "final_patterns.tex")
+            train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", Path(config["work_dir"]) / "patgen",
+                         "final_patterns.tex")
         eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh",
                     Path(config["work_dir"]) / "patgen",
                     "patgen_mispredicted.txt",
