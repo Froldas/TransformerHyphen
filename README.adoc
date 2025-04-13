@@ -63,7 +63,3 @@ shutil which dot (to prevent missing dot program)
 find out if efficiency means compression rate between OG dataset and the model
 
 
-nice to have: grid search parametry patgenu optimizace (srovnání apple to apple)
-velikost format file, zakomentovat českou, odkomentovat
-python module na načtení vzorů v unicode
-

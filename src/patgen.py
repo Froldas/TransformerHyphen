@@ -55,12 +55,12 @@ def train_patgen(dataset, work_dir, output_filename):
     subprocess.check_call(" ".join(args))
 
 
-def eval_patgen(dataset, work_dir, output_filename, hyp_tf):
+def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     tmp_dir = Path(work_dir)
     tmp_file = tmp_dir / "tmp_patterns"
     common_args = ["pypatgen", str(tmp_file)]
 
-    full_out_file_pth = Path(work_dir) / output_filename
+    full_out_file_pth = tmp_dir / output_filename
     Path.unlink(full_out_file_pth, missing_ok=True)
 
     args = common_args.copy()
@@ -105,7 +105,7 @@ def eval_patgen(dataset, work_dir, output_filename, hyp_tf):
     f1 = f1_score(ground_truth, prediction, average="samples", zero_division=0.0)
 
     dataset_size_kb = os.path.getsize(hyp_tf.data_file) / 1024
-    patgen_size_kb = os.path.getsize(Path(work_dir) / output_filename) / 1024
+    patgen_size_kb = os.path.getsize(tmp_dir / patterns_file) / 1024
     logging.info(f"Patgen evaluation: ")
     logging.info(f"    Dataset size is: {dataset_size_kb:.2f} KB")
     logging.info(f"    Patgen pattern size: {patgen_size_kb:.2f} KB")

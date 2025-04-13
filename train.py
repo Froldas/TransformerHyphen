@@ -39,9 +39,9 @@ def main():
                                                   print_info=config["print_dataset_statistics"])
     else:
         dataset = HyphenationDataset(data_file=config["dataset"],
-                                                  work_dir=config["work_dir"],
-                                                  encoding=Encodings().encodings[config["encoding"]],
-                                                  print_info=config["print_dataset_statistics"])
+                                     work_dir=config["work_dir"],
+                                     encoding=Encodings().encodings[config["encoding"]],
+                                     print_info=config["print_dataset_statistics"])
 
     # note: patgen requires dumping the datasets
     train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
@@ -88,6 +88,7 @@ def main():
         eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh",
                     Path(config["work_dir"]) / "patgen",
                     "patgen_mispredicted.txt",
+                    "final_patterns.tex",
                     hyp_tf=dataset)
 
 
