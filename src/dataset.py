@@ -26,7 +26,7 @@ class HyphenationInterface:
             if letter not in list(self.letter_encoding.keys()):
                 continue
             input_vector[idx * self.encoding_size: (idx + 1) * self.encoding_size] = self.letter_encoding[letter]
-        return tf.constant([input_vector], dtype=tf.float32).numpy()
+        return tf.constant(input_vector, dtype=tf.float32).numpy()
 
     def convert_word_to_expected_output(self, word):
         hyphen_indices = [idx - 1 for idx, ch in enumerate(word) if ch == "-"]

@@ -19,6 +19,7 @@ class SimpleFloatEncoding(Encoding):
     ...
 
     """
+
     def __init__(self, dataset: [str], unique_letters: [str]):
         self._letters = unique_letters
         self._letter_encoding = {}
@@ -45,7 +46,7 @@ class SimpleFloatEncoding(Encoding):
 
 class AdvancedFloatEncoding(Encoding):
 
-    def __init__(self,  dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: [str], unique_letters: [str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = 1
@@ -67,7 +68,8 @@ class AdvancedFloatEncoding(Encoding):
         for idx, letter in enumerate(split_organized_letters):
             if idx >= vowel_count:
                 # add consonants (one extra space between consonants and vowels
-                self.letter_encoding[letter] = [0.0 + (idx + spacing_ratio_between_vowels_consonants) * spacing_between_letters]
+                self.letter_encoding[letter] = [
+                    0.0 + (idx + spacing_ratio_between_vowels_consonants) * spacing_between_letters]
             else:
                 # add vowels
                 self.letter_encoding[letter] = [0.0 - (idx + 1) * spacing_between_letters]
@@ -84,9 +86,10 @@ class AdvancedFloatEncoding(Encoding):
     def encoding_size(self) -> int:
         return self._encoding_size
 
+
 class AdvancedFloatEncoding2(Encoding):
 
-    def __init__(self,  dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: [str], unique_letters: [str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = 1
@@ -108,9 +111,9 @@ class AdvancedFloatEncoding2(Encoding):
         for idx, letter in enumerate(split_organized_letters):
             if idx >= vowel_count:
                 if letter == "l":
-                    self.letter_encoding[letter] = [0.0 - 2*spacing_between_letters]
+                    self.letter_encoding[letter] = [0.0 - 2 * spacing_between_letters]
                 elif letter == "r":
-                    self.letter_encoding[letter] = [0.0 - 3*spacing_between_letters]
+                    self.letter_encoding[letter] = [0.0 - 3 * spacing_between_letters]
                 else:
                     # add consonants (one extra space between consonants and vowels
                     self.letter_encoding[letter] = [1.0 - (idx - vowel_count) * spacing_between_letters]
