@@ -8,7 +8,7 @@ class TransformerCombined1(nn.Module):
         super(TransformerCombined1, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
-        self.attention = SelfAttention(embed_size, residual=True, normalization='layernorm')
+        self.attention = SelfAttention(embed_size, residual=True, normalization='batchnorm')
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size, normalization='batchnorm')
         self.fc_hidden1 = FeedForward(hidden_size, hidden_size, normalization='batchnorm')
         self.fc_hidden2 = FeedForward(hidden_size, hidden_size, normalization='batchnorm')

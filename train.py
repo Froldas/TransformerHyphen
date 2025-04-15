@@ -53,7 +53,7 @@ def main():
                    dataset.output_size).models[config["model"]].to(device)
 
     loss_func = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
+    optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"])
 
     # Training
     utils.model_training(model, train_dataset, config["num_epochs"], optimizer, loss_func, config["batch_size"], device)
