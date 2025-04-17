@@ -1,3 +1,4 @@
+from hyphen import Hyphenator
 import logging
 import numpy as np
 import os
@@ -274,3 +275,17 @@ def sliding_windows(string, padding=3, padding_char=' '):
         result.append((chunk, label))
 
     return result
+
+def download_english_dataset(string, padding=3, padding_char=' '):
+    # Initialize the hyphenator for US English
+    h_en = Hyphenator('en_US')
+
+    # Read words from the input file
+    with open('word_list.txt', 'r', encoding='utf-8') as infile:
+        words = [line.strip() for line in infile if line.strip()]
+
+    # Open the output file to write hyphenated words
+    with open('hyphenated_words.txt', 'w', encoding='utf-8') as outfile:
+        for word in words:
+            hyphenated = h_en.inserted(word)
+            outfile.write(f'{word} -> {hyphenated}\n')

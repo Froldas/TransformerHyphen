@@ -16,9 +16,9 @@ class TransformerCombined1(nn.Module):
         self.fc_out = FeedForward(hidden_size, output_size, activation="sigmoid")
 
     def forward(self, x):
-        x = x.view(-1, self.input_tokens, self.embed_size)
+        x = x.reshape(-1, self.input_tokens, self.embed_size)
         x = self.attention(x)
-        x = x.view(-1, self.input_tokens * self.embed_size)
+        x = x.reshape(-1, self.input_tokens * self.embed_size)
         x = self.fc_in(x)
         res = x
         x = self.fc_hidden1(x)
@@ -29,5 +29,5 @@ class TransformerCombined1(nn.Module):
 
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.7).float()
+            x = (x > 0.5).float()
         return x
