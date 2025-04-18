@@ -1,4 +1,4 @@
-from hyphen import Hyphenator
+from hyphen.hyphenator import Hyphenator
 import logging
 import numpy as np
 import os
@@ -212,17 +212,6 @@ def quantize_model(model):
 
 
 def create_sliding_window_mask(seq_len, window_size):
-    """
-    Creates a mask for a sequence where each position attends to itself and
-    'window_size' positions before and after it.
-
-    Args:
-        seq_len (int): Length of the sequence.
-        window_size (int): Number of positions before and after to attend to.
-
-    Returns:
-        torch.Tensor: The attention mask of shape (seq_len, seq_len).
-    """
     # Initialize the mask with zeros
     mask = torch.zeros(seq_len, seq_len)
 
@@ -236,56 +225,55 @@ def create_sliding_window_mask(seq_len, window_size):
 
     return mask
 
+def sliding_splits(word, padding=3, fill=" ", hyphen="-"):
+    unhyphened = word.replace(hyphen, "")
+    hyphen_pred = []
+    hyphens_found = 0
 
-def sliding_windows(string, padding=3, padding_char=' '):
-    result = []
-    filtered_indices = [i for i, c in enumerate(string) if c != '-']
-    window_size = 2 * padding + 1
+    for idx, letter in enumerate(word):
+        if letter == hyphen:
+            hyphen_pred.append(idx - hyphens_found - 1)
+            hyphens_found += 1
 
-    for center_idx in range(len(filtered_indices)):
-        center_pos = filtered_indices[center_idx]
-        # Build a list of valid positions for the window
-        window_positions = []
+    splits = []
+    for idx, center_letter in enumerate(unhyphened):
+        if center_letter == hyphen:
+            continue
+        left_padding = fill * max(0, padding - idx)
+        right_padding = fill * max(0, padding + idx + 1 - len(unhyphened))
 
-        # Grab left padding
-        i = center_idx - 1
-        while len(window_positions) < padding and i >= 0:
-            window_positions.insert(0, filtered_indices[i])
-            i -= 1
-        while len(window_positions) < padding:
-            window_positions.insert(0, None)  # pad left
-
-        # Add center character
-        window_positions.append(center_pos)
-
-        # Grab right padding
-        i = center_idx + 1
-        while len(window_positions) < window_size and i < len(filtered_indices):
-            window_positions.append(filtered_indices[i])
-            i += 1
-        while len(window_positions) < window_size:
-            window_positions.append(None)  # pad right
-
-        # Build the chunk
-        chunk = ''.join(string[pos] if pos is not None else padding_char for pos in window_positions)
-
-        # Determine label
-        label = 1.0 if center_pos + 1 < len(string) and string[center_pos + 1] == '-' else 0.0
+        left_border = max(0, idx - padding)
+        right_border = min(len(unhyphened), idx + padding + 1)
+        split = left_padding + unhyphened[left_border:right_border] + right_padding
+        label = 1.0 if idx in hyphen_pred else 0.0
         label = tf.constant([label], dtype=tf.float32).numpy()
-        result.append((chunk, label))
+        splits.append((split, label))
+    return splits
 
-    return result
-
-def download_english_dataset(string, padding=3, padding_char=' '):
+def generate_hyphenated_english_words(eng_words):
     # Initialize the hyphenator for US English
     h_en = Hyphenator('en_US')
 
-    # Read words from the input file
-    with open('word_list.txt', 'r', encoding='utf-8') as infile:
+    # Read words from the input file with 5000 most frequent words
+    with open(eng_words, 'r', encoding='utf-8') as infile:
         words = [line.strip() for line in infile if line.strip()]
 
-    # Open the output file to write hyphenated words
-    with open('hyphenated_words.txt', 'w', encoding='utf-8') as outfile:
-        for word in words:
-            hyphenated = h_en.inserted(word)
-            outfile.write(f'{word} -> {hyphenated}\n')
+    hyphenated_eng_words = []
+    for word in words:
+        syllables = h_en.syllables(word)
+        if syllables:
+            hyphenated = '-'.join(syllables)
+        else:
+            hyphenated = word  # No hyphenation points found
+        hyphenated_eng_words.append(hyphenated)
+    return hyphenated_eng_words
+
+
+def append_dataset(dataset_path, new_entries, out_path):
+    with open(out_path, 'w+', encoding='utf-8') as outfile:
+        with open(dataset_path, 'r+', encoding='utf-8') as sourcefile:
+            old_words = sourcefile.readlines()
+        all_words = old_words + [new_entry + '\n' for new_entry in new_entries]
+
+        outfile.writelines(all_words)
+
