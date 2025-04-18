@@ -6,7 +6,7 @@ import tensorflow as tf
 from pathlib import Path
 from torch.utils.data import Dataset
 
-from src.utils import remove_hyphenation, sliding_windows
+from src.utils import remove_hyphenation, sliding_splits
 from src.constants import HYPHENS
 
 
@@ -117,10 +117,12 @@ class HyphenationDataset(Dataset, HyphenationInterface):
                 self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
 
     def _print_info(self):
-        logging.info(f"Input_size: {self.input_size}")
-        logging.info(f"Number of unique letters: {len(self.unique_letters)}")
-        logging.info(f"Unique letters: {sorted(self.unique_letters)}")
+        logging.info(f"Dataset size: {self.__len__()}")
         logging.info(f"Longest word: {self.longest_word}")
+        logging.info(f"Longest word size: {len(self.longest_word)}")
+        logging.info(f"Input_size: {self.input_size}")
+        logging.info(f"Unique letters: {sorted(self.unique_letters)}")
+        logging.info(f"Number of unique letters: {len(self.unique_letters)}")
         logging.info(f"Letter encoding: {self.letter_encoding}")
 
     def __len__(self):
@@ -160,7 +162,7 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
             work_dir)
 
         for word in self.words:
-            chunks = sliding_windows(word)
+            chunks = sliding_splits(word)
             for input_substring, label in chunks:
                 input_vector = self.encode(remove_hyphenation(input_substring))
                 self.datapoints.append((input_vector, label))
@@ -183,10 +185,12 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
                 self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
 
     def _print_info(self):
-        logging.info(f"Input_size: {self.input_size}")
-        logging.info(f"Number of unique letters: {len(self.unique_letters)}")
-        logging.info(f"Unique letters: {sorted(self.unique_letters)}")
+        logging.info(f"Dataset size: {len(self.datapoints)}")
         logging.info(f"Longest word: {self.longest_word}")
+        logging.info(f"Longest word size: {len(self.longest_word)}")
+        logging.info(f"Input_size: {self.input_size}")
+        logging.info(f"Unique letters: {sorted(self.unique_letters)}")
+        logging.info(f"Number of unique letters: {len(self.unique_letters)}")
         logging.info(f"Letter encoding: {self.letter_encoding}")
 
     def __len__(self):
