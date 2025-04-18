@@ -23,6 +23,12 @@ def main():
 
     os.makedirs(config["work_dir"], exist_ok=True)
 
+    if config["english_words"]:
+        eng_words = utils.generate_hyphenated_english_words(Path("datasets") / 'Oxford 5000.txt')
+        merged_dataset_path = Path(config["work_dir"]) / "merged_dataset.wlh"
+        utils.append_dataset(Path(config["dataset"]), eng_words, merged_dataset_path)
+        config["dataset"] = merged_dataset_path
+
     utils.setup_logger(Path(config["work_dir"]) / config["training_log_path"])
     # Check if CUDA is available
     device = "cpu"  #torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -32,15 +38,14 @@ def main():
 
     # Create datasets and dataloaders
     if config["sliding_window"]:
-        dataset = HyphenationDatasetSlidingWindow(data_file=config["dataset"],
-                                                  work_dir=config["work_dir"],
-                                                  encoding=Encodings().encodings[config["encoding"]],
-                                                  print_info=config["print_dataset_statistics"])
+        dataset_type = HyphenationDatasetSlidingWindow
     else:
-        dataset = HyphenationDataset(data_file=config["dataset"],
-                                     work_dir=config["work_dir"],
-                                     encoding=Encodings().encodings[config["encoding"]],
-                                     print_info=config["print_dataset_statistics"])
+        dataset_type = HyphenationDataset
+
+    dataset = dataset_type(data_file=config["dataset"],
+                                              work_dir=config["work_dir"],
+                                              encoding=Encodings().encodings[config["encoding"]],
+                                              print_info=config["print_dataset_statistics"])
 
     # note: patgen requires dumping the datasets
     train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
@@ -49,7 +54,8 @@ def main():
 
     model = Models(dataset.num_input_tokens,
                    dataset.encoding_size,
-                   dataset.output_size).models[config["model"]].to(device)
+                   dataset.output_size,
+                   config["hyphen_threshold"]).models[config["model"]].to(device)
 
     loss_func = nn.BCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=0.05)

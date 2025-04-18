@@ -4,10 +4,11 @@ from src.models.modules import FeedForward, SelfAttention
 
 
 class TransformerCombined1(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
         super(TransformerCombined1, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size, residual=True, normalization='batchnorm')
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size, normalization='batchnorm')
         self.fc_hidden1 = FeedForward(hidden_size, hidden_size, normalization='batchnorm')
@@ -29,5 +30,5 @@ class TransformerCombined1(nn.Module):
 
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.5).float()
+            x = (x > self.hyphen_threshold).float()
         return x

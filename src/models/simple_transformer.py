@@ -6,10 +6,11 @@ from src.utils import create_sliding_window_mask
 
 
 class SimpleTransformer(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
         super(SimpleTransformer, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size)
         self.fc_hidden = FeedForward(hidden_size, hidden_size)
@@ -25,15 +26,16 @@ class SimpleTransformer(nn.Module):
 
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.7).float()
+            x = (x > self.hyphen_threshold).float()
         return x
 
 
 class SimpleTransformerResidual(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
         super(SimpleTransformerResidual, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size, residual=True, normalization='layernorm')
         self.fc_hidden = FeedForward(hidden_size, hidden_size, residual=True, normalization='layernorm')
@@ -49,15 +51,16 @@ class SimpleTransformerResidual(nn.Module):
 
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.7).float()
+            x = (x > self.hyphen_threshold).float()
         return x
 
 
 class SimpleTransformerMaskWindow(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
         super(SimpleTransformerMaskWindow, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size)
         self.fc_hidden = FeedForward(hidden_size, hidden_size)
@@ -73,16 +76,17 @@ class SimpleTransformerMaskWindow(nn.Module):
 
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.7).float()
+            x = (x > self.hyphen_threshold).float()
         return x
 
 
 class SimpleTransformerReversed(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
         super(SimpleTransformerReversed, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
         self.hidden_size = hidden_size
+        self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size)
         self.fc_hidden = FeedForward(hidden_size, hidden_size)
@@ -98,15 +102,16 @@ class SimpleTransformerReversed(nn.Module):
 
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.7).float()
+            x = (x > self.hyphen_threshold).float()
         return x
 
 
 class SimpleTransformerResidualDeep(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
         super(SimpleTransformerResidualDeep, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
         self.fc_in = nn.Linear(input_tokens * embed_size, hidden_size)
         self.fc_hidden1 = nn.Linear(hidden_size, hidden_size)
@@ -127,5 +132,5 @@ class SimpleTransformerResidualDeep(nn.Module):
         x = F.sigmoid(x)
         if not self.training:
             # return 1 or 0 based on a threshold
-            x = (x > 0.8).float()
+            x = (x > self.hyphen_threshold).float()
         return x

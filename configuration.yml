@@ -1,5 +1,5 @@
 ---
-model: SimpleTransformerResidual
+model: TransformerCombined1
 sliding_window: False
 encoding: advanced_binary
 seed: 42
@@ -7,9 +7,10 @@ batch_size: 32
 num_epochs: 5
 train_split: 0.9
 learning_rate: 0.001
+hyphen_threshold: 0.5
 
 # paths
-dataset: datasets/cs-all-cstenten.wlh
+dataset: datasets/ger-gist.wlh
 work_dir: build
 model_path: output_model.pth
 configuration_path: conf.pk
@@ -18,7 +19,8 @@ training_log_path: training.log
 
 # misc settings
 generate_mispredicted: False
-print_dataset_statistics: False
+english_words: True
+print_dataset_statistics: True
 patgen: False
 patgen_force_rebuild: False
 
