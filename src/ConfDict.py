@@ -19,12 +19,21 @@ class Models:
     """
     def __init__(self, input_tokens, embedding_size, output_size, hyphen_threshold):
         self.models = {"SimpleMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleMLPConvolution": SimpleMLPConvolution(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleLargeMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=512, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleTransformerMaskWindow": SimpleTransformerMaskWindow(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleTransformerReversed": SimpleTransformerReversed(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleTransformerConvolution": SimpleTransformerConvolution(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleTransformerConvolutionSecond": SimpleTransformerConvolution(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "TransformerCombined1": TransformerCombined1(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "TransformerCombined2": TransformerCombined2(input_tokens, embedding_size, hidden_size=64,
+                                                                    output_size=output_size,
+                                                                    hyphen_threshold=hyphen_threshold),
+                       "TransformerCombined3": TransformerCombined3(input_tokens, embedding_size, hidden_size=64,
+                                                                    output_size=output_size,
+                                                                    hyphen_threshold=hyphen_threshold),
                        "SimpleLargeTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=4096, output_size=output_size, hyphen_threshold=hyphen_threshold)
                        }
 
