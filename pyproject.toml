@@ -1,0 +1,17 @@
+[project]
+name = "TransformerHyphen"
+version = "0.7.0"
+description = "Research work about using transformers for the hyphenation task"
+authors = [
+    { name="Jan Franěk", email="jan.froldas@gmail.com" }
+]
+dependencies = [
+    "pyhyphen",
+    "numpy~=2.0.2",
+    "pypatgen",
+    "PyYAML",
+    "scikit-learn",
+    "tensorflow~=2.18.0",
+    "torch~=2.6.0",
+    "torchview"
+]
