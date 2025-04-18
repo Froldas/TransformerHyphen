@@ -116,3 +116,62 @@ class FeedForward(nn.Module):
                 out = self.norm(out)
 
         return out
+
+class Conv1DBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1,
+                 padding=None, activation='relu', normalization=None,
+                 residual=False, dropout=0.0):
+        super(Conv1DBlock, self).__init__()
+
+        # Determine padding to maintain sequence length if not specified
+        if padding is None:
+            padding = (kernel_size - 1) // 2
+
+        self.residual = residual and (in_channels == out_channels)
+
+        # Convolutional layer
+        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size,
+                              stride=stride, padding=padding)
+
+        # Activation function
+        if activation == 'relu':
+            self.activation = nn.ReLU()
+        elif activation == 'sigmoid':
+            self.activation = nn.Sigmoid()
+        else:
+            raise ValueError("Unsupported activation. Choose 'relu' or 'sigmoid'.")
+
+        # Normalization layer
+        if normalization == 'layernorm':
+            self.norm = nn.LayerNorm(out_channels)
+        elif normalization == 'batchnorm':
+            self.norm = nn.BatchNorm1d(out_channels)
+        elif normalization is None:
+            self.norm = None
+        else:
+            raise ValueError("Unsupported normalization. Choose 'layernorm', 'batchnorm', or None.")
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        """
+        x: Tensor of shape (batch_size, in_channels, seq_len)
+        """
+        out = self.conv(x)  # Shape: (batch_size, out_channels, seq_len)
+
+        if self.norm:
+            if isinstance(self.norm, nn.LayerNorm):
+                # Transpose to (batch_size, seq_len, out_channels) for LayerNorm
+                out = out.transpose(1, 2)
+                out = self.norm(out)
+                out = out.transpose(1, 2)
+            else:
+                out = self.norm(out)
+
+        out = self.activation(out)
+        out = self.dropout(out)
+
+        if self.residual:
+            out = out + x  # Residual connection
+
+        return out

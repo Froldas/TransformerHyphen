@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.models.modules import FeedForward, SelfAttention
+from src.models.modules import FeedForward, SelfAttention, Conv1DBlock
 from src.utils import create_sliding_window_mask
 
 
@@ -130,6 +130,62 @@ class SimpleTransformerResidualDeep(nn.Module):
         x = F.relu(self.fc_hidden2(x))
         x = self.fc_out(x)
         x = F.sigmoid(x)
+        if not self.training:
+            # return 1 or 0 based on a threshold
+            x = (x > self.hyphen_threshold).float()
+        return x
+
+class SimpleTransformerConvolution(nn.Module):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5, kernel_count=16):
+        super(SimpleTransformerConvolution, self).__init__()
+        self.input_tokens = input_tokens
+        self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
+        self.kernel_count = kernel_count
+        self.conv_in = Conv1DBlock(1, self.kernel_count, embed_size*7, stride=embed_size, padding=(embed_size*7 - 1)//2)
+        self.attention = SelfAttention(self.kernel_count)
+        self.fc_in = FeedForward(input_tokens * self.kernel_count, hidden_size)
+        self.fc_hidden = FeedForward(hidden_size, hidden_size)
+        self.fc_out = FeedForward(hidden_size, output_size, activation="sigmoid")
+
+    def forward(self, x):
+        x = x.view(-1, 1, self.embed_size*self.input_tokens)
+        x = self.conv_in(x)
+        x = x.view(-1, self.input_tokens, self.kernel_count)
+        x = self.attention(x)
+        x = x.view(-1, self.input_tokens*self.kernel_count)
+        x = self.fc_in(x)
+        x = self.fc_hidden(x)
+        x = self.fc_out(x)
+
+        if not self.training:
+            # return 1 or 0 based on a threshold
+            x = (x > self.hyphen_threshold).float()
+        return x
+
+class SimpleTransformerConvolutionSecond(nn.Module):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5, kernel_count=16):
+        super(SimpleTransformerConvolutionSecond, self).__init__()
+        self.input_tokens = input_tokens
+        self.embed_size = embed_size
+        self.hyphen_threshold = hyphen_threshold
+        self.kernel_count = kernel_count
+        self.conv_in = Conv1DBlock(1, self.kernel_count, embed_size*7, stride=embed_size, padding=(embed_size*7 - 1)//2)
+        self.attention = SelfAttention(self.kernel_count)
+        self.fc_in = FeedForward(input_tokens * self.kernel_count, hidden_size)
+        self.fc_hidden = FeedForward(hidden_size, hidden_size)
+        self.fc_out = FeedForward(hidden_size, output_size, activation="sigmoid")
+
+    def forward(self, x):
+        x = x.view(-1, self.input_tokens, self.kernel_count)
+        x = self.attention(x)
+        x = x.view(-1, 1, self.embed_size * self.input_tokens)
+        x = self.conv_in(x)
+        x = x.view(-1, self.input_tokens * self.kernel_count)
+        x = self.fc_in(x)
+        x = self.fc_hidden(x)
+        x = self.fc_out(x)
+
         if not self.training:
             # return 1 or 0 based on a threshold
             x = (x > self.hyphen_threshold).float()
