@@ -87,11 +87,10 @@ def main():
                            sliding_window=config["sliding_window"])
 
     if config["patgen"]:
-        if config["patgen_force_rebuild"]:
-            train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", Path(config["work_dir"]) / "patgen",
-                         "final_patterns.tex")
-        eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh",
-                    Path(config["work_dir"]) / "patgen",
+        patgen_path = Path(config["work_dir"]) / "patgen"
+        if not Path.is_dir(patgen_path) or config["patgen_force_rebuild"]:
+            train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", patgen_path, "final_patterns.tex")
+        eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh", patgen_path,
                     "patgen_mispredicted.txt",
                     "final_patterns.tex",
                     hyp_tf=dataset)
