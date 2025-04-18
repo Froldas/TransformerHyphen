@@ -61,4 +61,7 @@ Here is the list of the most important ones:
 Study german dataset meaning of symbols
 shutil which dot (to prevent missing dot program)
 
+== Notes
+Oxford dictionary 500 is a merge of oxford 3000 and oxford 5000 etra 2000 words, but I had to clean non-letter symbols,
+compound phrases and duplication marks
 
