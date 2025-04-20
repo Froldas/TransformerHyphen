@@ -3,7 +3,7 @@ import numpy as np
 
 from src.encoding import Encoding
 from src.constants import VOWELS
-from typing import Any
+from typing import Any, List
 
 
 class BinaryEncoding(Encoding):
@@ -18,7 +18,7 @@ class BinaryEncoding(Encoding):
 
     """
 
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = math.ceil(math.log2(len(self._letters) + 1))
@@ -27,11 +27,11 @@ class BinaryEncoding(Encoding):
             self.letter_encoding[letter] = [int(bit) for bit in np.binary_repr(idx + 1, width=self.encoding_size)]
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property
@@ -51,7 +51,7 @@ class AdvancedBinaryEncoding(Encoding):
 
     """
 
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = math.ceil(math.log2(len(self._letters) + 1))
@@ -72,11 +72,11 @@ class AdvancedBinaryEncoding(Encoding):
             self.letter_encoding[letter] = [int(bit) for bit in np.binary_repr(idx + 1, width=self.encoding_size)]
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property
@@ -94,7 +94,7 @@ class OneHotEncoding(Encoding):
     ...
 
     """
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = len(self._letters)
@@ -102,11 +102,11 @@ class OneHotEncoding(Encoding):
             self.letter_encoding[letter] = [1 if i == idx else 0 for i in range(self._encoding_size)]
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property

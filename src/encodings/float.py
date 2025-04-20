@@ -1,9 +1,6 @@
-import math
-import numpy as np
-
 from src.encoding import Encoding
 from src.constants import VOWELS
-from typing import Any
+from typing import Any, List
 
 
 class SimpleFloatEncoding(Encoding):
@@ -20,7 +17,7 @@ class SimpleFloatEncoding(Encoding):
 
     """
 
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = 1
@@ -32,11 +29,11 @@ class SimpleFloatEncoding(Encoding):
             self.letter_encoding[letter] = [0.0 + (idx + 1) * spacing_between_letters]
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property
@@ -46,7 +43,7 @@ class SimpleFloatEncoding(Encoding):
 
 class AdvancedFloatEncoding(Encoding):
 
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = 1
@@ -75,11 +72,11 @@ class AdvancedFloatEncoding(Encoding):
                 self.letter_encoding[letter] = [0.0 - (idx + 1) * spacing_between_letters]
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property
@@ -89,7 +86,7 @@ class AdvancedFloatEncoding(Encoding):
 
 class AdvancedFloatEncoding2(Encoding):
 
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = 1
@@ -119,14 +116,14 @@ class AdvancedFloatEncoding2(Encoding):
                     self.letter_encoding[letter] = [1.0 - (idx - vowel_count) * spacing_between_letters]
             else:
                 # add vowels
-                self.letter_encoding[letter] = [-1.0 + (idx) * spacing_between_letters]
+                self.letter_encoding[letter] = [-1.0 + idx * spacing_between_letters]
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property

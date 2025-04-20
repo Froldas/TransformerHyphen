@@ -183,11 +183,11 @@ def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_w
     logging.info(f"{label} evaluation: ")
     logging.info(f"    Dataset size is: {dataset_size_kb:.2f} KB")
     logging.info(f"    {label} size: {model_size_kb:.2f} KB")
-    logging.info(f"    {label} Efficiency: {(dataset_size_kb / model_size_kb) * 100:.2f} %")
-    logging.info(f"    {label} Accuracy: {accuracy:.4f}")
-    logging.info(f"    {label} Recall: {recall:.4f}")
-    logging.info(f"    {label} Precision: {precision:.4f}")
-    logging.info(f"    {label} F1: {f1:.4f}")
+    logging.info(f"    {label} Efficiency: {(dataset_size_kb / model_size_kb) * 100: .2f} %")
+    logging.info(f"    {label} Accuracy: {accuracy: .4f}")
+    logging.info(f"    {label} Recall: {recall: .4f}")
+    logging.info(f"    {label} Precision: {precision: .4f}")
+    logging.info(f"    {label} F1: {f1: .4f}")
 
 
 def model_training(model, train_dataset, num_epochs, optimizer, loss_func, batch_size, device):
@@ -225,6 +225,7 @@ def create_sliding_window_mask(seq_len, window_size):
 
     return mask
 
+
 def sliding_splits(word, padding=3, fill=" ", hyphen="-"):
     unhyphened = word.replace(hyphen, "")
     hyphen_pred = []
@@ -249,6 +250,7 @@ def sliding_splits(word, padding=3, fill=" ", hyphen="-"):
         label = tf.constant([label], dtype=tf.float32).numpy()
         splits.append((split, label))
     return splits
+
 
 def generate_hyphenated_english_words(eng_words):
     # Initialize the hyphenator for US English
@@ -276,4 +278,3 @@ def append_dataset(dataset_path, new_entries, out_path):
         all_words = old_words + [new_entry + '\n' for new_entry in new_entries]
 
         outfile.writelines(all_words)
-

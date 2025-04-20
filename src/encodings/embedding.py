@@ -1,7 +1,7 @@
 import numpy as np
 
 from src.encoding import Encoding
-from typing import Any
+from typing import Any, List
 from sklearn.feature_extraction.text import CountVectorizer
 from src.utils import remove_hyphenation
 
@@ -19,7 +19,7 @@ class SimpleEmbedding(Encoding):
     ...
 
     """
-    def __init__(self, dataset: [str], unique_letters: [str]):
+    def __init__(self, dataset: List[str], unique_letters: List[str]):
         self._letters = unique_letters
         self._letter_encoding = {}
         self._encoding_size = 32
@@ -44,11 +44,11 @@ class SimpleEmbedding(Encoding):
 
 
     @property
-    def letters(self) -> [str]:
+    def letters(self) -> List[str]:
         return self._letters
 
     @property
-    def letter_encoding(self) -> dict[str, [Any]]:
+    def letter_encoding(self) -> dict[str, List[Any]]:
         return self._letter_encoding
 
     @property

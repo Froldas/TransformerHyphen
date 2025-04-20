@@ -67,8 +67,8 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     args += ["test"]
     args += [str(dataset)]
     args += ["-e", str(full_out_file_pth)]
-    subprocess.check_call(" ".join(args))
-
+    output = subprocess.check_output(" ".join(args))
+    logging.info(output.decode("utf-8"))
     eval_dict = {}
 
     with open(full_out_file_pth, "r+", encoding="utf-8") as f:

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 import yaml
-
+import itertools
 
 from pathlib import Path
 from src.utils import load_yaml_conf
@@ -41,6 +41,8 @@ def main():
     os.makedirs(WORK_DIR, exist_ok=True)
 
     run_index = 0
+
+    # list(itertools.product([MODELS, ENCODINGS, DATASETS, ]])
     for model in MODELS:
         for encoding in ENCODINGS:
             for dataset in DATASETS:
