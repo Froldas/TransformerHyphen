@@ -16,21 +16,9 @@ Hyphenation using transformers
 
 === How to use
 
-There are three stages which you can run.
-
 TRAIN: `train.py`
 
 Runs training of the model and dumps the network files with its configuration plus performs evaluation.
-
-WARNING: required to be run before all other stages.
-
-EVALUATE: `evaluate.py`
-
-Dumps all mispredicted words to a .txt file.
-
-INFERENCE: `inference.py <INPUT_STRING>`
-
-Runs inference using the last trained model on the input string.
 
 GRID_RUN: `grid_run.py`
 Alternatively, there is script `grid_run.py` where you can select which configuration superset will be run
@@ -45,7 +33,10 @@ Here is the list of the most important ones:
 
 `SimpleMLP` - regular fully connected multi-layer perceptron model
 
-`SimpleTransoformer` - self-attention layer followed by fully connected model
+`SimpleTransformer` - self-attention layer followed by fully connected model
+
+...
+Check src/ConfDict.py to see all available models
 
 === *encoding*
 
@@ -57,9 +48,7 @@ Here is the list of the most important ones:
 
 `advanced_float` - letters are converted to a single float with vowels and consonants grouped
 
-== TODOs
-Study german dataset meaning of symbols
-shutil which dot (to prevent missing dot program)
+
 
 == Notes
 Oxford dictionary 500 is a merge of oxford 3000 and oxford 5000 etra 2000 words, but I had to clean non-letter symbols,
