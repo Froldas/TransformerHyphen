@@ -14,6 +14,7 @@ class SelfAttention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = embed_dim // num_heads
         self.residual = residual
+        self.dropout_ratio = dropout
 
         # Linear projections for Q, K, V
         self.q_proj = nn.Linear(embed_dim, embed_dim)
@@ -21,7 +22,8 @@ class SelfAttention(nn.Module):
         self.v_proj = nn.Linear(embed_dim, embed_dim)
         self.out_proj = nn.Linear(embed_dim, embed_dim)
 
-        self.dropout = nn.Dropout(dropout)
+        if self.dropout_ratio > 0.0:
+            self.dropout = nn.Dropout(dropout)
 
         # Normalization layer
         if normalization == "layernorm":
@@ -49,12 +51,14 @@ class SelfAttention(nn.Module):
         if mask is not None:
             scores = scores.masked_fill(mask == 0, float('-inf'))
         attn_weights = F.softmax(scores, dim=-1)
-        attn_weights = self.dropout(attn_weights)
+        if self.dropout_ratio > 0.0:
+            attn_weights = self.dropout(attn_weights)
 
         attn_output = torch.matmul(attn_weights, V)  # (batch, heads, seq_len, head_dim)
         attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, seq_length, self.embed_dim)
         output = self.out_proj(attn_output)
-        output = self.dropout(output)
+        if self.dropout_ratio > 0.0:
+            output = self.dropout(output)
 
         if self.residual:
             output = output + residual  # Add residual connection

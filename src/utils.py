@@ -129,6 +129,7 @@ def visualize(model, dataset, work_dir):
 
 def dump_dataset(dataset, indices, output_path):
     Path.unlink(output_path, missing_ok=True)
+
     with open(output_path, "w+", encoding="utf-8") as f:
         for index in indices:
             f.writelines(f"{dataset.words[index]}\n")
@@ -155,53 +156,59 @@ def model_size(model):
 
 
 def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_window=False):
+    y = torch.Tensor(np.array(y)).detach()
     x_pred = model.cpu()((torch.Tensor(np.array(X))).cpu())
 
-    accuracy = accuracy_score(torch.Tensor(np.array(y)).detach().numpy(),
-                              x_pred.to("cpu").detach().numpy())
+    tp = (x_pred.view(-1) == 1.0) & (y.view(-1) == 1.0)
+    tn = (x_pred.view(-1) == 0.0) & (y.view(-1) == 0.0)
+    fp = (x_pred.view(-1) == 1.0) & (y.view(-1) == 0.0)
+    fn = (x_pred.view(-1) == 0.0) & (y.view(-1) == 1.0)
 
-    if sliding_window:
-        recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                              zero_division=0.0)
-        precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                                    zero_division=0.0)
-        f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                      zero_division=0.0)
-    else:
-        recall = recall_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                              average="samples",
-                              zero_division=0.0)
-        precision = precision_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                                    average="samples",
-                                    zero_division=0.0)
-        f1 = f1_score(torch.Tensor(np.array(y)).detach().numpy(), x_pred.to("cpu").detach().numpy(),
-                      average="samples",
-                      zero_division=0.0)
+    # Sum up
+    stats = {
+        "TP": tp.sum().item(),
+        "TN": tn.sum().item(),
+        "FP": fp.sum().item(),
+        "FN": fn.sum().item()
+    }
+
+    missed = stats["FN"]
+    bad = stats["FP"]
+    correct = stats["TP"] + stats["TN"]
+    precision = stats["TP"] / (stats["TP"] + stats["FP"])
+    recall = stats["TP"] / (stats["TP"] + stats["FN"])
+    total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
+    accuracy = (stats["TP"]+stats["TN"]) / total
 
     dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
     logging.info(f"{label} evaluation: ")
-    logging.info(f"    Dataset size is: {dataset_size_kb:.2f} KB")
-    logging.info(f"    {label} size: {model_size_kb:.2f} KB")
-    logging.info(f"    {label} Efficiency: {(dataset_size_kb / model_size_kb) * 100: .2f} %")
-    logging.info(f"    {label} Accuracy: {accuracy: .4f}")
-    logging.info(f"    {label} Recall: {recall: .4f}")
-    logging.info(f"    {label} Precision: {precision: .4f}")
-    logging.info(f"    {label} F1: {f1: .4f}")
+    logging.info(f"    Dataset size is:{dataset_size_kb: .2f} KB")
+    logging.info(f"    {label} size:{model_size_kb: .2f} KB")
+    logging.info(f"    {label} Efficiency:{(dataset_size_kb / model_size_kb) * 100: .2f}%")
+
+    logging.info(f"    {label} Accuracy:{accuracy: .4f}")
+    logging.info(f"    {label} Recall:{recall: .4f}")
+    logging.info(f"    {label} Precision:{precision: .4f}")
+
+    logging.info(f"    {label} Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
+    logging.info(f"    {label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
+    logging.info(f"    {label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
 
 
-def model_training(model, train_dataset, num_epochs, optimizer, loss_func, batch_size, device):
-    kf = KFold(n_splits=num_epochs)
-    for epoch, (train_split_idx, val_split_idx) in enumerate(kf.split(range(len(train_dataset)))):
-        fold_train_subset = Subset(train_dataset, train_split_idx)
-        fold_val_subset = Subset(train_dataset, val_split_idx)
+def model_training(model, train_dataset, num_epochs, num_folds, optimizer, loss_func, batch_size, device):
+    kf = KFold(n_splits=num_folds)
+    for epoch in range(num_epochs):
+        for fold, (train_split_idx, val_split_idx) in enumerate(kf.split(range(len(train_dataset)))):
+            fold_train_subset = Subset(train_dataset, train_split_idx)
+            fold_val_subset = Subset(train_dataset, val_split_idx)
 
-        epoch_train_loader = DataLoader(fold_train_subset, batch_size=batch_size, shuffle=True)
-        epoch_val_loader = DataLoader(fold_val_subset, batch_size=batch_size)
+            fold_train_loader = DataLoader(fold_train_subset, batch_size=batch_size, shuffle=True, drop_last=True)
+            fold_val_loader = DataLoader(fold_val_subset, batch_size=batch_size)
 
-        epoch_loss = train_epoch(model, epoch_train_loader, optimizer, loss_func, device)
-        logging.info(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
-        validate(model, loss_func, epoch_val_loader, device)
+            epoch_loss = train_epoch(model, fold_train_loader, optimizer, loss_func, device)
+            logging.info(f'Round [{num_folds * epoch + fold + 1}/{num_folds * num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
+            validate(model, loss_func, fold_val_loader, device)
 
 
 def quantize_model(model):

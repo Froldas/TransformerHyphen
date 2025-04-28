@@ -68,7 +68,7 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     args += [str(dataset)]
     args += ["-e", str(full_out_file_pth)]
     output = subprocess.check_output(" ".join(args))
-    logging.info(output.decode("utf-8"))
+    logging.info(output.decode("utf-8").replace("\n", ""))
     eval_dict = {}
 
     with open(full_out_file_pth, "r+", encoding="utf-8") as f:
@@ -77,13 +77,14 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     with open(dataset, "r+", encoding="utf-8") as f:
         dataset_words = f.readlines()
         for dataset_word in dataset_words:
-            # key=input,  = predicted
+            #         input         = predicted
             eval_dict[dataset_word] = dataset_word
 
-    mispredicted_unified = [word.replace("*", "=").replace(".", "=") for word in mispredicted_words]
+    mispredicted_labels = [word.replace("*", "").replace(".", "-") for word in mispredicted_words]
+    mispredicted_predictions = [word.replace("*", "-").replace(".", "") for word in mispredicted_words]
 
-    for idx in range(len(mispredicted_unified)):
-        eval_dict[mispredicted_unified[idx]] = mispredicted_words[idx]
+    for idx in range(len(mispredicted_labels)):
+        eval_dict[mispredicted_labels[idx]] = mispredicted_predictions[idx]
 
     ground_truth = []
     prediction = []
@@ -91,7 +92,7 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     for key, value in eval_dict.items():
         ground_truth += [hyp_tf.convert_word_to_expected_output(key)]
 
-        hyphen_indices = [idx - 1 for idx, ch in enumerate(value) if ch == "-" or ch == "*"]
+        hyphen_indices = [idx - 1 for idx, ch in enumerate(value) if ch == "-"]
 
         hyphen_expected = [0 for _ in range(hyp_tf.output_size)]
         for idx, hyphen_index in enumerate(hyphen_indices):
@@ -99,10 +100,29 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
 
         prediction += [tf.constant(hyphen_expected, dtype=tf.float32).numpy()]
 
-    accuracy = accuracy_score(ground_truth, prediction)
-    recall = recall_score(ground_truth, prediction, average="samples", zero_division=0.0)
-    precision = precision_score(ground_truth, prediction, average="samples", zero_division=0.0)
-    f1 = f1_score(ground_truth, prediction, average="samples", zero_division=0.0)
+    prediction = torch.tensor(np.array(prediction)).view(-1)
+    ground_truth = torch.tensor(np.array(ground_truth)).view(-1)
+
+    tp = (prediction == 1.0) & (ground_truth == 1.0)
+    tn = (prediction == 0.0) & (ground_truth == 0.0)
+    fp = (prediction == 1.0) & (ground_truth == 0.0)
+    fn = (prediction == 0.0) & (ground_truth == 1.0)
+
+    # Sum up
+    stats = {
+        "TP": tp.sum().item(),
+        "TN": tn.sum().item(),
+        "FP": fp.sum().item(),
+        "FN": fn.sum().item()
+    }
+
+    missed = stats["FN"]
+    bad = stats["FP"]
+    correct = stats["TP"] + stats["TN"]
+    precision = stats["TP"] / (stats["TP"] + stats["FP"])
+    recall = stats["TP"] / (stats["TP"] + stats["FN"])
+    total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
+    accuracy = (stats["TP"] + stats["TN"]) / total
 
     dataset_size_kb = os.path.getsize(hyp_tf.data_file) / 1024
     patgen_size_kb = os.path.getsize(tmp_dir / patterns_file) / 1024
@@ -113,7 +133,9 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     logging.info(f"    Patgen Accuracy: {accuracy:.4f}")
     logging.info(f"    Patgen Recall: {recall:.4f}")
     logging.info(f"    Patgen Precision: {precision:.4f}")
-    logging.info(f"    Patgen F1: {f1:.4f}")
+    logging.info(f"    Patgen Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
+    logging.info(f"    Patgen Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
+    logging.info(f"    Patgen Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
 
 
 

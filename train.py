@@ -43,11 +43,10 @@ def main():
         dataset_type = HyphenationDataset
 
     dataset = dataset_type(data_file=config["dataset"],
-                                              work_dir=config["work_dir"],
-                                              encoding=Encodings().encodings[config["encoding"]],
-                                              print_info=config["print_dataset_statistics"])
+                           work_dir=config["work_dir"],
+                           encoding=Encodings().encodings[config["encoding"]],
+                           print_info=config["print_dataset_statistics"])
 
-    # note: patgen requires dumping the datasets
     train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
                                                       work_dir=config["work_dir"],
                                                       dump_datasets=config["patgen"])
@@ -61,7 +60,7 @@ def main():
     optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=0.05)
 
     # Training
-    utils.model_training(model, train_dataset, config["num_epochs"], optimizer, loss_func, config["batch_size"], device)
+    utils.model_training(model, train_dataset, config["num_epochs"], config["num_folds"], optimizer, loss_func, config["batch_size"], device)
 
     # Dump trained model
     quantized_model = utils.quantize_model(model)

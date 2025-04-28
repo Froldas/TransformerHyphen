@@ -23,6 +23,31 @@ class SimpleMLP(nn.Module):
 
         return x
 
+class SimpleDeeperMLP(nn.Module):
+
+    def __init__(self, input_size, hidden_size, output_size, hyphen_threshold=0.5):
+        super(SimpleDeeperMLP, self).__init__()
+        self.input_size = input_size
+        self.hyphen_threshold = hyphen_threshold
+        self.fc1 = FeedForward(input_size, hidden_size)
+        self.fc2 = FeedForward(hidden_size, hidden_size, normalization="layernorm")
+        self.fc3 = FeedForward(hidden_size, hidden_size, normalization="layernorm")
+        self.fc4 = FeedForward(hidden_size, hidden_size, normalization="layernorm")
+        self.fc5 = FeedForward(hidden_size, output_size, activation="sigmoid")
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = self.fc3(x)
+        x = self.fc4(x)
+        x = self.fc5(x)
+
+        if not self.training:
+            # return 1 or 0 based on a threshold
+            x = (x > self.hyphen_threshold).float()
+
+        return x
+
 class SimpleMLPConvolution(nn.Module):
 
     def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5, kernel_count=16):
