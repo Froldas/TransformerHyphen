@@ -9,14 +9,17 @@ import torch.optim as optim
 
 import src.utils as utils
 from src.ConfDict import Models, Encodings
+from src.evaluation import model_evaluation
 from src.dataset import HyphenationDataset, HyphenationDatasetSlidingWindow
 from src.patgen import train_patgen, eval_patgen
+from src.training import model_training
 
 YML_CONF_PATH = "configuration.yml"
 
 
 def main():
     if len(sys.argv) > 1:
+        # use config given as a parameter (needed by grid_run)
         config = utils.load_yaml_conf(Path(sys.argv[1]))
     else:
         config = utils.load_yaml_conf(Path(YML_CONF_PATH))
@@ -60,7 +63,15 @@ def main():
     optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=0.05)
 
     # Training
-    utils.model_training(model, train_dataset, config["num_epochs"], config["num_folds"], optimizer, loss_func, config["batch_size"], device)
+    model_training(model,
+                         train_dataset,
+                         config["num_epochs"],
+                         config["num_folds"],
+                         optimizer,
+                         loss_func,
+                         config["batch_size"],
+                         device,
+                         config["work_dir"])
 
     # Dump trained model
     quantized_model = utils.quantize_model(model)
@@ -68,7 +79,7 @@ def main():
     utils.save_model(quantized_model, Path(config["work_dir"]) / ("quant_" + config["model_path"]))
 
     if shutil.which("dot"):
-        utils.visualize(model, dataset, config["work_dir"])
+        utils.visualize_model(model, dataset, config["work_dir"])
 
     # evaluation phase
     utils.setup_logger(Path(config["work_dir"]) / "eval_metrics.log")
@@ -80,9 +91,9 @@ def main():
         X.append(features)  # Convert features to NumPy array
         y.append(label)
 
-    utils.model_evaluation(model, X, y, config["dataset"], device, label="Original model",
+    model_evaluation(model, X, y, config["dataset"], device, label="Original model",
                            sliding_window=config["sliding_window"])
-    utils.model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
+    model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
                            sliding_window=config["sliding_window"])
 
     if config["patgen"]:

@@ -11,7 +11,7 @@ learning_rate: 0.001
 hyphen_threshold: 0.5
 
 # paths
-dataset: datasets/cs-all-cstenten.wlh
+dataset: datasets/cs-ujc.wlh
 work_dir: build
 model_path: output_model.pth
 configuration_path: conf.pk

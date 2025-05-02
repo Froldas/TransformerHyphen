@@ -1,5 +1,6 @@
 from hyphen.hyphenator import Hyphenator
 import logging
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
@@ -14,7 +15,7 @@ from torch import no_grad, manual_seed, save
 from torch.utils.data import DataLoader, Subset
 from torchview import draw_graph
 from sklearn.model_selection import KFold, train_test_split
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+
 from src.constants import HYPHENS
 
 
@@ -63,38 +64,6 @@ def setup_logger(log_path):
         ]
     )
 
-
-def train_epoch(model: nn.Module, train_loader, optimizer, loss_func, device):
-    model.train()
-    epoch_loss = []
-
-    for batch_X, batch_y in train_loader:
-        batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-
-        # Forward pass
-        outputs = model(batch_X)
-        loss = loss_func(outputs, batch_y)
-
-        # Backward pass and optimization
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        epoch_loss.append(float(loss))
-    return epoch_loss
-
-
-def validate(model: nn.Module, loss_func, validation_loader, device):
-    model.eval()
-    with no_grad():
-        val_loss = []
-        for batch_X, batch_y in validation_loader:
-            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-            predictions = model(batch_X)
-            loss = loss_func(predictions, batch_y)
-            val_loss.append(float(loss))
-        logging.info(f'Val loss: {np.mean(val_loss):.4f}')
-
-
 def remove_hyphenation(string):
     return string.translate({ord(hyph): None for hyph in HYPHENS})
 
@@ -122,7 +91,7 @@ def save_model(model, path: Path):
     logging.info(f"Model saved to {path}")
 
 
-def visualize(model, dataset, work_dir):
+def visualize_model(model, dataset, work_dir):
     model_graph = draw_graph(model, input_size=(1, dataset.input_size), expand_nested=True)
     model_graph.visual_graph.render(filename="model", format='pdf', directory=work_dir, quiet=True)
 
@@ -146,69 +115,6 @@ def split_dataset(dataset, train_split, work_dir=None, dump_datasets=False):
         dump_dataset(dataset, test_dataset_idx, Path(work_dir) / "test_dataset.wlh")
 
     return train_dataset, val_dataset
-
-
-def model_size(model):
-    torch.save(model.state_dict(), "temp.pth")
-    size = os.path.getsize("temp.pth") / 1024  # Convert to KB
-    os.remove("temp.pth")
-    return size
-
-
-def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_window=False):
-    y = torch.Tensor(np.array(y)).detach()
-    x_pred = model.cpu()((torch.Tensor(np.array(X))).cpu())
-
-    tp = (x_pred.view(-1) == 1.0) & (y.view(-1) == 1.0)
-    tn = (x_pred.view(-1) == 0.0) & (y.view(-1) == 0.0)
-    fp = (x_pred.view(-1) == 1.0) & (y.view(-1) == 0.0)
-    fn = (x_pred.view(-1) == 0.0) & (y.view(-1) == 1.0)
-
-    # Sum up
-    stats = {
-        "TP": tp.sum().item(),
-        "TN": tn.sum().item(),
-        "FP": fp.sum().item(),
-        "FN": fn.sum().item()
-    }
-
-    missed = stats["FN"]
-    bad = stats["FP"]
-    correct = stats["TP"] + stats["TN"]
-    precision = stats["TP"] / (stats["TP"] + stats["FP"])
-    recall = stats["TP"] / (stats["TP"] + stats["FN"])
-    total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
-    accuracy = (stats["TP"]+stats["TN"]) / total
-
-    dataset_size_kb = os.path.getsize(dataset) / 1024
-    model_size_kb = model_size(model)
-    logging.info(f"{label} evaluation: ")
-    logging.info(f"    Dataset size is:{dataset_size_kb: .2f} KB")
-    logging.info(f"    {label} size:{model_size_kb: .2f} KB")
-    logging.info(f"    {label} Efficiency:{(dataset_size_kb / model_size_kb) * 100: .2f}%")
-
-    logging.info(f"    {label} Accuracy:{accuracy: .4f}")
-    logging.info(f"    {label} Recall:{recall: .4f}")
-    logging.info(f"    {label} Precision:{precision: .4f}")
-
-    logging.info(f"    {label} Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
-    logging.info(f"    {label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
-    logging.info(f"    {label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
-
-
-def model_training(model, train_dataset, num_epochs, num_folds, optimizer, loss_func, batch_size, device):
-    kf = KFold(n_splits=num_folds)
-    for epoch in range(num_epochs):
-        for fold, (train_split_idx, val_split_idx) in enumerate(kf.split(range(len(train_dataset)))):
-            fold_train_subset = Subset(train_dataset, train_split_idx)
-            fold_val_subset = Subset(train_dataset, val_split_idx)
-
-            fold_train_loader = DataLoader(fold_train_subset, batch_size=batch_size, shuffle=True, drop_last=True)
-            fold_val_loader = DataLoader(fold_val_subset, batch_size=batch_size)
-
-            epoch_loss = train_epoch(model, fold_train_loader, optimizer, loss_func, device)
-            logging.info(f'Round [{num_folds * epoch + fold + 1}/{num_folds * num_epochs}], Loss: {np.mean(epoch_loss):.4f}')
-            validate(model, loss_func, fold_val_loader, device)
 
 
 def quantize_model(model):
@@ -285,3 +191,27 @@ def append_dataset(dataset_path, new_entries, out_path):
         all_words = old_words + [new_entry + '\n' for new_entry in new_entries]
 
         outfile.writelines(all_words)
+
+
+def plot_loss(loss_values, title="Training Loss", xlabel="Epoch", ylabel="Loss", save_path=None):
+    """
+    Plots the training loss and optionally saves it to a file.
+
+    Args:
+        loss_values (list or torch.Tensor): List of float loss values.
+        title (str): Title of the plot.
+        xlabel (str): Label for x-axis.
+        ylabel (str): Label for y-axis.
+        save_path (str or Path, optional): File path to save the plot (e.g., 'loss_plot.png').
+    """
+    plt.figure(figsize=(8, 5))
+    plt.plot(loss_values, marker='o', linestyle='-', color='blue')
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=300)
+    else:
+        plt.show()
