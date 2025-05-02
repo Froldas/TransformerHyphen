@@ -1,9 +1,10 @@
-
 import logging
 import numpy as np
 import os
-
 import torch
+
+from pathlib import Path
+
 
 def model_size(model):
     torch.save(model.state_dict(), "temp.pth")
@@ -52,3 +53,44 @@ def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_w
     logging.info(f"    {label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
     logging.info(f"    {label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
 
+
+def convert_mispredicted(word, prediction, label):
+    bad = (prediction == 1.0) & (label == 0.0)
+    missed = (prediction == 0.0) & (label == 1.0)
+
+    result = ""
+    for i, char in enumerate(word.replace("-", "")):
+        result += char
+        if i < len(bad) and bad[i]:
+            result += "*"
+        if i < len(missed) and missed[i]:
+            result += "."
+    return result
+
+
+def analyze_mismatches(config):
+    model_misprediction_pth = Path(config["work_dir"]) / config["mispredict_path"]
+    patgen_misprediction_pth = Path(config["work_dir"]) / "patgen" / "patgen_mispredicted.txt"
+
+    with open(model_misprediction_pth, "r+", encoding="utf-8") as f:
+        model_mispredicted = f.readlines()
+
+    with open(patgen_misprediction_pth, "r+", encoding="utf-8") as f:
+        patgen_mispredicted = f.readlines()
+
+    mismatches_dict = {}
+
+    for mismatch in (model_mispredicted + patgen_mispredicted):
+        mismatch_key = mismatch.replace("*", "").replace(".", "").replace("\n", "")
+        if mismatch_key in mismatches_dict:
+            mismatches_dict[mismatch_key].append(mismatch.replace("\n", ""))
+        else:
+            mismatches_dict[mismatch_key] = [mismatch.replace("\n", "")]
+
+    both_misprediction_pth = Path(config["work_dir"]) / "common_mispredicted.txt"
+
+    with open(both_misprediction_pth, "w+", encoding="utf-8") as f:
+        f.writelines(f"model|patgen\n")
+        for key, value in mismatches_dict.items():
+            if len(value) == 2:
+                f.writelines(f"{value[0]}|{value[1]}")

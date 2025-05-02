@@ -19,7 +19,7 @@ mispredict_path: wrong_predicted.txt
 training_log_path: training.log
 
 # misc settings
-generate_mispredicted: False
+generate_mispredicted: True
 english_words: False
 print_dataset_statistics: True
 patgen: True

@@ -1,7 +1,9 @@
 import logging
+import numpy as np
 import os
 import shutil
 import sys
+import torch
 from pathlib import Path
 
 import torch.nn as nn
@@ -9,7 +11,7 @@ import torch.optim as optim
 
 import src.utils as utils
 from src.ConfDict import Models, Encodings
-from src.evaluation import model_evaluation
+from src.evaluation import model_evaluation, convert_mispredicted, analyze_mismatches
 from src.dataset import HyphenationDataset, HyphenationDatasetSlidingWindow
 from src.patgen import train_patgen, eval_patgen
 from src.training import model_training
@@ -17,29 +19,32 @@ from src.training import model_training
 YML_CONF_PATH = "configuration.yml"
 
 
-def evaluation(model, quantized_model, config, test_dataset, device):
-    # Dump trained model
-    quantized_model = utils.quantize_model(model)
-    utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
-    utils.save_model(quantized_model, Path(config["work_dir"]) / ("quant_" + config["model_path"]))
-
-    if shutil.which("dot"):
-        utils.visualize_model(model, test_dataset, config["work_dir"])
+def evaluation(model, quantized_model, config, test_dataset, original_dataset, device):
 
     # evaluation phase
     utils.setup_logger(Path(config["work_dir"]) / "eval_metrics.log")
 
     X = []
     y = []
-    for data_point in test_dataset:
-        features, label = data_point
+    original_words = []
+    for index in test_dataset.indices:
+        features, label = original_dataset[index]
         X.append(features)  # Convert features to NumPy array
         y.append(label)
+        original_words.append(original_dataset.words[index])
 
     model_evaluation(model, X, y, config["dataset"], device, label="Original model",
                      sliding_window=config["sliding_window"])
     model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
                      sliding_window=config["sliding_window"])
+
+    if config["generate_mispredicted"]:
+        with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
+            x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+            for i in range(len(original_words)):
+                if not torch.equal(x_pred[i], torch.Tensor(y[i])):
+                    f.writelines(
+                        f"{convert_mispredicted(original_words[i], x_pred[i], torch.Tensor(y[i]))}\n")
 
 
 def quantize_and_save(model, config, dataset):
@@ -131,11 +136,12 @@ def main():
     # quantize and dump both original and quantized version
     quantized_model = quantize_and_save(model, config, dataset)
 
-    evaluation(model, quantized_model, config, test_dataset, device)
+    evaluation(model, quantized_model, config, test_dataset, dataset, device)
 
     if config["patgen"]:
         run_patgen(config, dataset)
 
+    analyze_mismatches(config)
 
 if __name__ == "__main__":
     main()
