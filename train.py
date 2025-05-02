@@ -17,6 +17,69 @@ from src.training import model_training
 YML_CONF_PATH = "configuration.yml"
 
 
+def evaluation(model, quantized_model, config, test_dataset, device):
+    # Dump trained model
+    quantized_model = utils.quantize_model(model)
+    utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
+    utils.save_model(quantized_model, Path(config["work_dir"]) / ("quant_" + config["model_path"]))
+
+    if shutil.which("dot"):
+        utils.visualize_model(model, test_dataset, config["work_dir"])
+
+    # evaluation phase
+    utils.setup_logger(Path(config["work_dir"]) / "eval_metrics.log")
+
+    X = []
+    y = []
+    for data_point in test_dataset:
+        features, label = data_point
+        X.append(features)  # Convert features to NumPy array
+        y.append(label)
+
+    model_evaluation(model, X, y, config["dataset"], device, label="Original model",
+                     sliding_window=config["sliding_window"])
+    model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
+                     sliding_window=config["sliding_window"])
+
+
+def quantize_and_save(model, config, dataset):
+    # Dump trained model
+    quantized_model = utils.quantize_model(model)
+    utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
+    utils.save_model(quantized_model, Path(config["work_dir"]) / ("quant_" + config["model_path"]))
+
+    if shutil.which("dot"):
+        utils.visualize_model(model, dataset, config["work_dir"])
+    return quantized_model
+
+
+def run_patgen(config, dataset):
+    patgen_path = Path(config["work_dir"]) / "patgen"
+    if not Path.is_dir(patgen_path) or config["patgen_force_rebuild"]:
+        train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", patgen_path, "final_patterns.tex")
+    eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh", patgen_path,
+                "patgen_mispredicted.txt",
+                "final_patterns.tex",
+                hyp_tf=dataset)
+
+
+def merge_english_words(config):
+    eng_words = utils.generate_hyphenated_english_words(Path("datasets") / 'Oxford 5000.txt')
+    merged_dataset_path = Path(config["work_dir"]) / "merged_dataset.wlh"
+    utils.append_dataset(Path(config["dataset"]), eng_words, merged_dataset_path)
+    return merged_dataset_path
+
+
+def setup_and_set_device(config):
+    utils.setup_logger(Path(config["work_dir"]) / config["training_log_path"])
+    # set seed for reproducibility
+    utils.set_seed(config["seed"])
+    # Check if CUDA is available
+    device = "cpu"  # torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logging.info(f"Using device: {device}")
+    return device
+
+
 def main():
     if len(sys.argv) > 1:
         # use config given as a parameter (needed by grid_run)
@@ -26,18 +89,10 @@ def main():
 
     os.makedirs(config["work_dir"], exist_ok=True)
 
-    if config["english_words"]:
-        eng_words = utils.generate_hyphenated_english_words(Path("datasets") / 'Oxford 5000.txt')
-        merged_dataset_path = Path(config["work_dir"]) / "merged_dataset.wlh"
-        utils.append_dataset(Path(config["dataset"]), eng_words, merged_dataset_path)
-        config["dataset"] = merged_dataset_path
+    device = setup_and_set_device(config)
 
-    utils.setup_logger(Path(config["work_dir"]) / config["training_log_path"])
-    # Check if CUDA is available
-    device = "cpu"  #torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.info(f"Using device: {device}")
-    # set seed for reproducibility
-    utils.set_seed(config["seed"])
+    if config["english_words"]:
+        config["dataset"] = merge_english_words(config)
 
     # Create datasets and dataloaders
     if config["sliding_window"]:
@@ -64,46 +119,22 @@ def main():
 
     # Training
     model_training(model,
-                         train_dataset,
-                         config["num_epochs"],
-                         config["num_folds"],
-                         optimizer,
-                         loss_func,
-                         config["batch_size"],
-                         device,
-                         config["work_dir"])
+                   train_dataset,
+                   config["num_epochs"],
+                   config["num_folds"],
+                   optimizer,
+                   loss_func,
+                   config["batch_size"],
+                   device,
+                   config["work_dir"])
 
-    # Dump trained model
-    quantized_model = utils.quantize_model(model)
-    utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
-    utils.save_model(quantized_model, Path(config["work_dir"]) / ("quant_" + config["model_path"]))
+    # quantize and dump both original and quantized version
+    quantized_model = quantize_and_save(model, config, dataset)
 
-    if shutil.which("dot"):
-        utils.visualize_model(model, dataset, config["work_dir"])
-
-    # evaluation phase
-    utils.setup_logger(Path(config["work_dir"]) / "eval_metrics.log")
-
-    X = []
-    y = []
-    for data_point in test_dataset:
-        features, label = data_point
-        X.append(features)  # Convert features to NumPy array
-        y.append(label)
-
-    model_evaluation(model, X, y, config["dataset"], device, label="Original model",
-                           sliding_window=config["sliding_window"])
-    model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
-                           sliding_window=config["sliding_window"])
+    evaluation(model, quantized_model, config, test_dataset, device)
 
     if config["patgen"]:
-        patgen_path = Path(config["work_dir"]) / "patgen"
-        if not Path.is_dir(patgen_path) or config["patgen_force_rebuild"]:
-            train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", patgen_path, "final_patterns.tex")
-        eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh", patgen_path,
-                    "patgen_mispredicted.txt",
-                    "final_patterns.tex",
-                    hyp_tf=dataset)
+        run_patgen(config, dataset)
 
 
 if __name__ == "__main__":
