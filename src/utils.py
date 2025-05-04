@@ -75,7 +75,9 @@ def insert_hyphenation(string, bit_list):
     # Iterate over the bit_list and insert '-' where there is a 1
     hyphens_inserted = 0
     for index, bit in enumerate(bit_list):
-        if bit == 1:
+        if index >= len(string) - 1:
+            break
+        if bit == 1.0:
             # Insert '-' at the predicted spot
             string_list.insert(index + hyphens_inserted + 1, '-')
             hyphens_inserted += 1
