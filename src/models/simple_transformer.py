@@ -12,15 +12,13 @@ class SimpleTransformer(nn.Module):
         self.embed_size = embed_size
         self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
-        self.fc_in = FeedForward(input_tokens * embed_size, hidden_size)
-        self.fc_hidden = FeedForward(hidden_size, hidden_size)
+        self.fc_hidden = FeedForward(input_tokens * embed_size, hidden_size)
         self.fc_out = FeedForward(hidden_size, output_size, activation="sigmoid")
 
     def forward(self, x):
         x = x.view(-1, self.input_tokens, self.embed_size)
         x = self.attention(x)
         x = x.view(-1, self.input_tokens*self.embed_size)
-        x = self.fc_in(x)
         x = self.fc_hidden(x)
         x = self.fc_out(x)
 
@@ -36,16 +34,14 @@ class SimpleTransformerResidual(nn.Module):
         self.input_tokens = input_tokens
         self.embed_size = embed_size
         self.hyphen_threshold = hyphen_threshold
-        self.attention = SelfAttention(embed_size)
-        self.fc_in = FeedForward(input_tokens * embed_size, hidden_size, residual=True, normalization='layernorm')
-        self.fc_hidden = FeedForward(hidden_size, hidden_size, residual=True, normalization='layernorm')
+        self.attention = SelfAttention(embed_size, residual=True)
+        self.fc_hidden = FeedForward(input_tokens * embed_size, hidden_size, residual=True, normalization='layernorm')
         self.fc_out = FeedForward(hidden_size, output_size, activation="sigmoid")
 
     def forward(self, x):
         x = x.view(-1, self.input_tokens, self.embed_size)
         x = self.attention(x)
         x = x.view(-1, self.input_tokens*self.embed_size)
-        x = self.fc_in(x)
         x = self.fc_hidden(x)
         x = self.fc_out(x)
 
@@ -89,15 +85,13 @@ class SimpleTransformerReversed(nn.Module):
         self.hyphen_threshold = hyphen_threshold
         self.attention = SelfAttention(embed_size)
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size)
-        self.fc_hidden = FeedForward(hidden_size, hidden_size)
-        self.fc_out = FeedForward(hidden_size, output_size, activation="sigmoid")
+        self.fc_out = FeedForward(input_tokens * embed_size, output_size, activation="sigmoid")
 
     def forward(self, x):
         x = self.fc_in(x)
         x = x.view(-1, self.hidden_size, self.embed_size)
         x = self.attention(x)
         x = x.view(-1, self.hidden_size * self.embed_size)
-        x = self.fc_hidden(x)
         x = self.fc_out(x)
 
         if not self.training:

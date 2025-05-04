@@ -118,7 +118,7 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
 
     missed = stats["FN"]
     bad = stats["FP"]
-    correct = stats["TP"] + stats["TN"]
+    correct = stats["TP"]# + stats["TN"]
     precision = stats["TP"] / (stats["TP"] + stats["FP"])
     recall = stats["TP"] / (stats["TP"] + stats["FN"])
     total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]

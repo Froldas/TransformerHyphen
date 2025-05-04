@@ -32,7 +32,7 @@ def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_w
 
     missed = stats["FN"]
     bad = stats["FP"]
-    correct = stats["TP"] + stats["TN"]
+    correct = stats["TP"] # + stats["TN"]
     precision = stats["TP"] / (stats["TP"] + stats["FP"])
     recall = stats["TP"] / (stats["TP"] + stats["FN"])
     total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
@@ -93,4 +93,4 @@ def analyze_mismatches(config):
         f.writelines(f"model|patgen\n")
         for key, value in mismatches_dict.items():
             if len(value) == 2:
-                f.writelines(f"{value[0]}|{value[1]}")
+                f.writelines(f"{value[0]}|{value[1]}\n")
