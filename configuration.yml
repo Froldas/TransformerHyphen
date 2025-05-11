@@ -1,18 +1,19 @@
 ---
 # training and model selection
-model: TransformerCombined3
+model: AdvancedTransformerResidualDeep
 sliding_window: False
-encoding: advanced_binary
+encoding: one_hot
+dataset: datasets/cs-tenten.wlh
 seed: 42
-batch_size: 32
-num_folds: 2
-num_epochs: 1
+batch_size: 512
+num_folds: 5
+num_epochs: 4
 train_split: 0.9
 learning_rate: 0.001
 hyphen_threshold: 0.5
+early_stopping: True
 
 # paths
-dataset: datasets/cs-dummy.wlh
 work_dir: build
 model_path: output_model.pth
 configuration_path: conf.pk
@@ -21,15 +22,16 @@ training_log_path: training.log
 onxx_model_path: model_export.onxx
 
 # evaluation
-generate_mispredicted: True
+generate_mispredicted: False
 english_words: False
 print_dataset_statistics: True
-patgen: True
+patgen: False
 patgen_force_rebuild: False
-analyze_mismatches: True
+analyze_mismatches: False
+measure_speed: True
 
-# exporting
-onxx_export: True
+# exporting (not 100% working for all models for now)
+onxx_export: False
 
-# early_stopping not working yet
-# early_stopping: True
+
+

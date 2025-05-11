@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import os
+import time
 import torch
 
 from pathlib import Path
@@ -13,9 +14,17 @@ def model_size(model):
     return size
 
 
-def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_window=False):
-    y = torch.Tensor(np.array(y)).detach()
-    x_pred = model.cpu()((torch.Tensor(np.array(X))).cpu())
+def model_evaluation(model, X, y, dataset, device, label="Full model", measure_speed=False):
+    y = torch.Tensor(np.array(y)).detach().to(device)
+
+    if measure_speed:
+        start = time.time()
+        x_pred = model.to(device)((torch.Tensor(np.array(X))).to(device))
+        end = time.time()
+        logging.info(f"{label} finished evaluation in{end - start: .2f} seconds")
+        logging.info(f"{label} has predicted{len(X) / (end - start): .2f} words per second")
+    else:
+        x_pred = model.to(device)((torch.Tensor(np.array(X))).to(device))
 
     tp = (x_pred.view(-1) == 1.0) & (y.view(-1) == 1.0)
     tn = (x_pred.view(-1) == 0.0) & (y.view(-1) == 0.0)
@@ -29,29 +38,8 @@ def model_evaluation(model, X, y, dataset, device, label="Full model", sliding_w
         "FP": fp.sum().item(),
         "FN": fn.sum().item()
     }
-
-    missed = stats["FN"]
-    bad = stats["FP"]
-    correct = stats["TP"] # + stats["TN"]
-    precision = stats["TP"] / (stats["TP"] + stats["FP"])
-    recall = stats["TP"] / (stats["TP"] + stats["FN"])
-    total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
-    accuracy = (stats["TP"] + stats["TN"]) / total
-
-    dataset_size_kb = os.path.getsize(dataset) / 1024
     model_size_kb = model_size(model)
-    logging.info(f"{label} evaluation: ")
-    logging.info(f"    Dataset size is:{dataset_size_kb: .2f} KB")
-    logging.info(f"    {label} size:{model_size_kb: .2f} KB")
-    logging.info(f"    {label} Efficiency:{(dataset_size_kb / model_size_kb) * 100: .2f}%")
-
-    logging.info(f"    {label} Accuracy:{accuracy: .4f}")
-    logging.info(f"    {label} Recall:{recall: .4f}")
-    logging.info(f"    {label} Precision:{precision: .4f}")
-
-    logging.info(f"    {label} Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
-    logging.info(f"    {label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
-    logging.info(f"    {label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
+    report_metrics(stats, label, dataset, model_size_kb)
 
 
 def convert_mispredicted(word, prediction, label):
@@ -66,6 +54,34 @@ def convert_mispredicted(word, prediction, label):
         if i < len(missed) and missed[i]:
             result += "."
     return result
+
+
+def report_metrics(stats, model_label, dataset_path, model_size):
+    missed = stats["FN"]
+    bad = stats["FP"]
+    correct = stats["TP"] # + stats["TN"]
+    precision = stats["TP"] / (stats["TP"] + stats["FP"] + 0.00000001)
+    recall = stats["TP"] / (stats["TP"] + stats["FN"] + 0.00000001)
+    all = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
+    accuracy = (stats["TP"] + stats["TN"]) / all
+
+    # patgen convention? Assuming 100% = amount of hyphens in the original eval dataset
+    total = correct + missed
+
+    dataset_size_kb = os.path.getsize(dataset_path) / 1024
+
+    logging.info(f"{model_label} evaluation: ")
+    logging.info(f"    Dataset size is:{dataset_size_kb: .2f} KB")
+    logging.info(f"    {model_label} size:{model_size: .2f} KB")
+    logging.info(f"    {model_label} Efficiency:{(dataset_size_kb / model_size) * 100: .2f}%")
+
+    logging.info(f"    {model_label} Accuracy:{accuracy: .4f}")
+    logging.info(f"    {model_label} Recall:{recall: .4f}")
+    logging.info(f"    {model_label} Precision:{precision: .4f}")
+
+    logging.info(f"    {model_label} Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
+    logging.info(f"    {model_label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
+    logging.info(f"    {model_label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
 
 
 def analyze_mismatches(config):

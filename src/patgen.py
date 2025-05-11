@@ -1,12 +1,14 @@
-import os
 import logging
-import subprocess
-import torch
 import numpy as np
-from pathlib import Path
+import os
+import subprocess
+import time
 import tensorflow as tf
-from src.utils import remove_hyphenation
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+import torch
+
+from pathlib import Path
+
+from src.evaluation import report_metrics
 
 # sequence of the
 # * selector arguments triplets
@@ -14,11 +16,12 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 # Length of the sequence defines amount of pattern levels
 
 # format of each entry is: [(good, bad, threshold),(start, finish)]
+#                            selector             , range
 # More info about the entries: https://mirrors.nic.cz/tex-archive/info/patgen2-tutorial/patgen2-tutorial.pdf
 PATGEN_SELECTORS = [[(1, 4, 20), (1, 3)],  #1 hyphenation
-                     [(1, 2, 5), (1, 3)],  #2 inhibiting
-                     [(1, 2, 5), (1, 4)],  #3 hyphenation
-                     [(1, 1, 2), (1, 4)],  #4 inhibiting
+                     [(1, 3, 5), (1, 3)],  #2 inhibiting
+                     [(1, 2, 2), (1, 4)],  #3 hyphenation
+                     [(1, 2, 2), (1, 4)],  #4 inhibiting
                      #[(1, 1, 2), (1, 5)],  #5 hyphenation
                      #[(1, 1, 1), (1, 5)],  #3 inhibiting
                     # [(1, 1, 1), (1, 6)],  #7 hyphenation
@@ -51,11 +54,13 @@ def train_patgen(dataset, work_dir, output_filename):
 
     args = common_args.copy()
     args += ["export"]
+    args += ["-p", str(Path(work_dir) / "patterns.tex")]
+    args += ["-e", str(Path(work_dir) / "exceptions.tex")]
     args += [str(Path(work_dir) / output_filename)]
     subprocess.check_call(" ".join(args))
 
 
-def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
+def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf, measure_speed=False):
     tmp_dir = Path(work_dir)
     tmp_file = tmp_dir / "tmp_patterns"
     common_args = ["pypatgen", str(tmp_file)]
@@ -63,22 +68,34 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
     full_out_file_pth = tmp_dir / output_filename
     Path.unlink(full_out_file_pth, missing_ok=True)
 
+    # initialize dict for further processing
+    eval_dict = {}
+    with open(dataset, "r+", encoding="utf-8") as f:
+        dataset_words = f.readlines()
+        dataset_length = len(dataset_words)
+        for dataset_word in dataset_words:
+            #         input         = predicted
+            eval_dict[dataset_word] = dataset_word
+
+    # perform the evaluation
     args = common_args.copy()
     args += ["test"]
     args += [str(dataset)]
     args += ["-e", str(full_out_file_pth)]
-    output = subprocess.check_output(" ".join(args))
+
+    if measure_speed:
+        start = time.time()
+        output = subprocess.check_output(" ".join(args))
+        end = time.time()
+        logging.info(f"PyPatgen finished evaluation in{end - start: .2f} seconds")
+        logging.info(f"PyPatgen has predicted{dataset_length / (end - start): .2f} words per second")
+    else:
+        output = subprocess.check_output(" ".join(args))
+
     logging.info(output.decode("utf-8").replace("\n", ""))
-    eval_dict = {}
 
     with open(full_out_file_pth, "r+", encoding="utf-8") as f:
         mispredicted_words = f.readlines()
-
-    with open(dataset, "r+", encoding="utf-8") as f:
-        dataset_words = f.readlines()
-        for dataset_word in dataset_words:
-            #         input         = predicted
-            eval_dict[dataset_word] = dataset_word
 
     mispredicted_labels = [word.replace("*", "").replace(".", "-") for word in mispredicted_words]
     mispredicted_predictions = [word.replace("*", "-").replace(".", "") for word in mispredicted_words]
@@ -115,31 +132,5 @@ def eval_patgen(dataset, work_dir, output_filename, patterns_file, hyp_tf):
         "FP": fp.sum().item(),
         "FN": fn.sum().item()
     }
-
-    missed = stats["FN"]
-    bad = stats["FP"]
-    correct = stats["TP"]# + stats["TN"]
-    precision = stats["TP"] / (stats["TP"] + stats["FP"])
-    recall = stats["TP"] / (stats["TP"] + stats["FN"])
-    total = stats["TP"] + stats["TN"] + stats["FP"] + stats["FN"]
-    accuracy = (stats["TP"] + stats["TN"]) / total
-
-    dataset_size_kb = os.path.getsize(hyp_tf.data_file) / 1024
     patgen_size_kb = os.path.getsize(tmp_dir / patterns_file) / 1024
-    logging.info(f"Patgen evaluation: ")
-    logging.info(f"    Dataset size is: {dataset_size_kb:.2f} KB")
-    logging.info(f"    Patgen pattern size: {patgen_size_kb:.2f} KB")
-    logging.info(f"    Patgen Efficiency: {(dataset_size_kb / patgen_size_kb) * 100:.2f} %")
-    logging.info(f"    Patgen Accuracy: {accuracy:.4f}")
-    logging.info(f"    Patgen Recall: {recall:.4f}")
-    logging.info(f"    Patgen Precision: {precision:.4f}")
-    logging.info(f"    Patgen Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
-    logging.info(f"    Patgen Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
-    logging.info(f"    Patgen Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
-
-
-
-
-
-
-
+    report_metrics(stats, "Patgen", dataset, patgen_size_kb)

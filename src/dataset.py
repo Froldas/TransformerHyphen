@@ -83,9 +83,6 @@ class HyphenationDataset(Dataset, HyphenationInterface):
         self.input_size = len(self.longest_word) * self.encoding_size
         self.output_size = len(self.longest_word) - 1
 
-        if print_info:
-            self._print_info()
-
         super().__init__(
             len(self.longest_word),
             self.encoding_size,
@@ -98,6 +95,9 @@ class HyphenationDataset(Dataset, HyphenationInterface):
             input_vector = self.encode(word_without_hyphens)
             label = self.convert_word_to_expected_output(word)
             self.datapoints.append((input_vector, label))
+
+        if print_info:
+            self._print_info()
 
         self._dump_configuration()
 
@@ -115,6 +115,7 @@ class HyphenationDataset(Dataset, HyphenationInterface):
 
                 self.unique_letters.update(list(word_without_hyphens))
                 self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
+        self.unique_letters = sorted(list(self.unique_letters))
 
     def _print_info(self):
         logging.info(f"Dataset size: {self.__len__()}")
@@ -133,7 +134,7 @@ class HyphenationDataset(Dataset, HyphenationInterface):
 
 
 class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
-    def __init__(self, data_file, work_dir, encoding=None, context_size=3, print_info=False):
+    def __init__(self, data_file, work_dir, encoding=None, context_size=4, print_info=False):
         self.data_file = data_file
         self.unique_letters = set()
         self.longest_word = ""
@@ -151,9 +152,6 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
         self.input_size = window_size * self.encoding_size
         self.output_size = 1
 
-        if print_info:
-            self._print_info()
-
         super().__init__(
             window_size,
             self.encoding_size,
@@ -166,6 +164,9 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
             for input_substring, label in chunks:
                 input_vector = self.encode(remove_hyphenation(input_substring))
                 self.datapoints.append((input_vector, label))
+
+        if print_info:
+            self._print_info()
 
         self._dump_configuration()
 
@@ -194,7 +195,7 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
         logging.info(f"Letter encoding: {self.letter_encoding}")
 
     def __len__(self):
-        return len(self.words)
+        return len(self.datapoints)
 
     def __getitem__(self, idx):
         return self.datapoints[idx]

@@ -4,17 +4,25 @@ import shutil
 import subprocess
 import sys
 import yaml
-import itertools
 
 from pathlib import Path
 from src.utils import load_yaml_conf
 
 # ["SimpleTransformer", "SimpleMLP", "SimpleTransformerResidual", "SimpleTransformerMasked", "SimpleReverseTransformer"]
-MODELS = ["SimpleMLP", "SimpleTransformer", "SimpleTransformerResidual", "SimpleTransformerMasked", "SimpleReverseTransformer", "SimpleReverseTransformerResidualNormalized"]
+MODELS = [#"SimpleMLP",
+          #"SimpleDeeperMLP",
+          #"SimpleTransformer",
+          #"SimpleTransformerResidual",
+          #"SimpleTransformerReversed",
+          "TransformerCombined1",
+          "TransformerCombined2",
+          "TransformerCombined3"]
+
 # ["binary", "one_hot", "simple_float", "advanced_float"]
-ENCODINGS = ["advanced_binary"]
-# ["datasets/cs-ujc.wlh", "datasets/cs-all-cstenten.wlh", "datasets/wortliste.wlh"]
-DATASETS = ["datasets/cs-all-cstenten.wlh"]
+ENCODINGS = ["simple_embedding", "one_hot", "advanced_binary"]
+
+# ["datasets/cs-ujc.wlh", "datasets/cs-tenten.wlh", "datasets/wortliste.wlh"]
+DATASETS = ["datasets/cs-tenten.wlh", "datasets/wortliste.wlh"]
 YML_CONF_PATH = "configuration.yml"
 WORK_DIR = Path("grid_work")
 
@@ -29,7 +37,7 @@ def run(config, run_index):
     cfg_name = WORK_DIR / f"temp_cfg_{run_index}.yml"
     create_config(config, cfg_name)
     print(f"Commencing training #{run_index}.")
-    subprocess.check_call(f"{sys.executable} train.py {cfg_name}", stderr=subprocess.DEVNULL)
+    subprocess.check_call(f"{sys.executable} train.py {cfg_name}")#, stderr=subprocess.DEVNULL)
     #subprocess.check_call(f"{sys.executable} evaluate.py {cfg_name}", stderr=subprocess.DEVNULL)
 
 

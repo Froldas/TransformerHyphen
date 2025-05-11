@@ -20,7 +20,6 @@ YML_CONF_PATH = "configuration.yml"
 
 
 def evaluation(model, quantized_model, config, test_dataset, original_dataset, device):
-
     # evaluation phase
     utils.setup_logger(Path(config["work_dir"]) / "eval_metrics.log")
 
@@ -31,12 +30,13 @@ def evaluation(model, quantized_model, config, test_dataset, original_dataset, d
         features, label = original_dataset[index]
         X.append(features)  # Convert features to NumPy array
         y.append(label)
-        original_words.append(original_dataset.words[index])
+        if config["generate_mispredicted"]:
+            original_words.append(original_dataset.words[index])
 
     model_evaluation(model, X, y, config["dataset"], device, label="Original model",
-                     sliding_window=config["sliding_window"])
-    model_evaluation(quantized_model, X, y, config["dataset"], device, label="Quantized model",
-                     sliding_window=config["sliding_window"])
+                     measure_speed=config["measure_speed"])
+    model_evaluation(quantized_model, X, y, config["dataset"], "cpu", label="Quantized model",
+                     measure_speed=config["measure_speed"])
 
     if config["generate_mispredicted"]:
         with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
@@ -49,7 +49,7 @@ def evaluation(model, quantized_model, config, test_dataset, original_dataset, d
 
 def quantize_and_save(model, config, dataset):
     # Dump trained model
-    quantized_model = utils.quantize_model(model)
+    quantized_model = utils.quantize_model(model.to("cpu"))
     utils.save_model(model, Path(config["work_dir"]) / config["model_path"])
     utils.save_model(quantized_model, Path(config["work_dir"]) / ("quant_" + config["model_path"]))
 
@@ -64,8 +64,9 @@ def run_patgen(config, dataset):
         train_patgen(Path(config["work_dir"]) / "train_dataset.wlh", patgen_path, "final_patterns.tex")
     eval_patgen(Path(config["work_dir"]) / "test_dataset.wlh", patgen_path,
                 "patgen_mispredicted.txt",
-                "final_patterns.tex",
-                hyp_tf=dataset)
+                "patterns.tex",
+                hyp_tf=dataset,
+                measure_speed=config["measure_speed"])
 
 
 def merge_english_words(config):
@@ -79,8 +80,8 @@ def setup_and_set_device(config):
     utils.setup_logger(Path(config["work_dir"]) / config["training_log_path"])
     # set seed for reproducibility
     utils.set_seed(config["seed"])
-    # Check if CUDA is available
-    device = "cpu"  # torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Qunatized models cannot use GPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"Using device: {device}")
     return device
 
@@ -123,7 +124,8 @@ def main():
 
     train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
                                                       work_dir=config["work_dir"],
-                                                      dump_datasets=config["patgen"])
+                                                      dump_datasets=config["patgen"],
+                                                      seed=config["seed"])
 
     model = Models(dataset.num_input_tokens,
                    dataset.encoding_size,
@@ -142,10 +144,14 @@ def main():
                    loss_func,
                    config["batch_size"],
                    device,
-                   config["work_dir"])
+                   config["work_dir"],
+                   config["seed"],
+                   config["early_stopping"])
 
     # quantize and dump both original and quantized version
     quantized_model = quantize_and_save(model, config, dataset)
+    model.to(device)
+    quantized_model.to(device)
 
     evaluation(model, quantized_model, config, test_dataset, dataset, device)
 

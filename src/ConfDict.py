@@ -1,9 +1,10 @@
+
 from src.models.simple_mlp import *
 from src.models.simple_transformer import *
 from src.models.combined_transformer import *
 
 from src.encodings.binary import BinaryEncoding, AdvancedBinaryEncoding, OneHotEncoding
-from src.encodings.embedding import SimpleEmbedding
+from src.encodings.embedding import SimpleEmbedding, LargerEmbedding
 from src.encodings.float import SimpleFloatEncoding, AdvancedFloatEncoding, AdvancedFloatEncoding2
 
 """
@@ -18,27 +19,26 @@ class Models:
     All models must inherit from torch.nn.Module
     """
     def __init__(self, input_tokens, embedding_size, output_size, hyphen_threshold):
-        self.models = {"SimpleMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleDeeperMLP": SimpleDeeperMLP(input_tokens * embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleMLPConvolution": SimpleMLPConvolution(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
+        self.models = {"SimpleMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleDeeperMLP": SimpleDeeperMLP(input_tokens * embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleMLPConvolution": SimpleMLPConvolution(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleLargeMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=512, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleTransformerMaskWindow": SimpleTransformerMaskWindow(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleTransformerReversed": SimpleTransformerReversed(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleTransformerConvolution": SimpleTransformerConvolution(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "SimpleTransformerConvolutionSecond": SimpleTransformerConvolution(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "TransformerCombined1": TransformerCombined1(input_tokens, embedding_size, hidden_size=64, output_size=output_size, hyphen_threshold=hyphen_threshold),
-                       "TransformerCombined2": TransformerCombined2(input_tokens, embedding_size, hidden_size=64,
+                       "SimpleTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleTransformerReversed": SimpleTransformerReversed(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleTransformerConvolution": SimpleTransformerConvolution(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleTransformerConvolutionSecond": SimpleTransformerConvolution(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "TransformerCombined1": TransformerCombined1(input_tokens, embedding_size, hidden_size=512, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "TransformerCombined2": TransformerCombined2(input_tokens, embedding_size, hidden_size=512,
                                                                     output_size=output_size,
                                                                     hyphen_threshold=hyphen_threshold),
-                       "TransformerCombined3": TransformerCombined3(input_tokens, embedding_size, hidden_size=64,
+                       "TransformerCombined3": TransformerCombined3(input_tokens, embedding_size, hidden_size=512,
                                                                     output_size=output_size,
                                                                     hyphen_threshold=hyphen_threshold),
-                       "TransformerCombined4": TransformerCombined4(input_tokens, embedding_size, hidden_size=64,
+                       "AdvancedTransformerResidualDeep": AdvancedTransformerResidualDeep(input_tokens, embedding_size, hidden_size=128,
                                                                     output_size=output_size,
                                                                     hyphen_threshold=hyphen_threshold),
-                       "SimpleLargeTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=4096, output_size=output_size, hyphen_threshold=hyphen_threshold)
+                       "SimpleLargeTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=512, output_size=output_size, hyphen_threshold=hyphen_threshold)
                        }
 
 
@@ -53,4 +53,5 @@ class Encodings:
                           "simple_float": SimpleFloatEncoding,
                           "advanced_float": AdvancedFloatEncoding,
                           "advanced_float2": AdvancedFloatEncoding2,
-                          "simple_embedding": SimpleEmbedding}
+                          "simple_embedding": SimpleEmbedding,
+                          "large_embedding": LargerEmbedding}

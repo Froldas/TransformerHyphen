@@ -6,6 +6,7 @@ authors = [
     { name="Jan Franěk", email="jan.froldas@gmail.com" }
 ]
 dependencies = [
+    "matplotlib",
     "numpy~=2.0.2",
     "onnx",
     "onnxruntime",

@@ -4,10 +4,10 @@ import torch.nn.functional as F
 import math
 
 
-class SelfAttention(nn.Module):
+class Attention(nn.Module):
     def __init__(self, embed_dim, num_heads=1, dropout=0.0,
                  residual=False, normalization=None):
-        super(SelfAttention, self).__init__()
+        super(Attention, self).__init__()
         assert embed_dim % num_heads == 0, "Embedding dimension must be divisible by number of heads"
 
         self.embed_dim = embed_dim

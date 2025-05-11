@@ -11,10 +11,10 @@ import yaml
 import sys
 
 from pathlib import Path
-from torch import no_grad, manual_seed, save
-from torch.utils.data import DataLoader, Subset
+from torch import save
+from torch.utils.data import Subset
 from torchview import draw_graph
-from sklearn.model_selection import KFold, train_test_split
+from sklearn.model_selection import train_test_split
 
 from src.constants import HYPHENS
 
@@ -33,7 +33,7 @@ def set_seed(seed: int):
     :param seed: integer seed value
     :return: None
     """
-    manual_seed(seed)
+    torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
 
@@ -63,6 +63,7 @@ def setup_logger(log_path):
             logging.StreamHandler(sys.stdout)
         ]
     )
+
 
 def remove_hyphenation(string):
     return string.translate({ord(hyph): None for hyph in HYPHENS})
@@ -106,8 +107,10 @@ def dump_dataset(dataset, indices, output_path):
             f.writelines(f"{dataset.words[index]}\n")
 
 
-def split_dataset(dataset, train_split, work_dir=None, dump_datasets=False):
-    train_dataset_idx, test_dataset_idx = train_test_split(list(range(len(dataset))), test_size=(1.0 - train_split))
+def split_dataset(dataset, train_split, work_dir=None, dump_datasets=False, seed=42):
+    train_dataset_idx, test_dataset_idx = train_test_split(list(range(len(dataset))),
+                                                           test_size=(1.0 - train_split),
+                                                           random_state=seed)
 
     train_dataset = Subset(dataset, train_dataset_idx)
     val_dataset = Subset(dataset, test_dataset_idx)
