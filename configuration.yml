@@ -6,11 +6,11 @@ encoding: one_hot
 dataset: datasets/cs-tenten.wlh
 seed: 42
 batch_size: 512
-num_folds: 5
-num_epochs: 4
+num_folds: 10
+num_epochs: 2
 train_split: 0.9
 learning_rate: 0.001
-hyphen_threshold: 0.5
+hyphen_threshold: 0.9
 early_stopping: True
 
 # paths
@@ -30,8 +30,13 @@ patgen_force_rebuild: False
 analyze_mismatches: False
 measure_speed: True
 
+# inference
+print_attention_map: True
+
 # exporting (not 100% working for all models for now)
 onxx_export: False
+
+
 
 
 

@@ -3,7 +3,7 @@ import numpy as np
 import os
 import time
 import torch
-
+from torch.utils.data import DataLoader
 from pathlib import Path
 
 
@@ -14,17 +14,27 @@ def model_size(model):
     return size
 
 
-def model_evaluation(model, X, y, dataset, device, label="Full model", measure_speed=False):
-    y = torch.Tensor(np.array(y)).detach().to(device)
+def inference(model, dataloader, label, device, measure_time=False):
+    start = time.time()
 
-    if measure_speed:
-        start = time.time()
-        x_pred = model.to(device)((torch.Tensor(np.array(X))).to(device))
+    x_pred = []
+
+    for batch in dataloader:
+        batch = batch.to(device)
+        outputs = model.to(device)(batch)
+        x_pred += outputs.cpu()
+
+    if measure_time:
         end = time.time()
         logging.info(f"{label} finished evaluation in{end - start: .2f} seconds")
-        logging.info(f"{label} has predicted{len(X) / (end - start): .2f} words per second")
-    else:
-        x_pred = model.to(device)((torch.Tensor(np.array(X))).to(device))
+        logging.info(f"{label} has predicted{len(x_pred) / (end - start): .2f} words per second")
+
+    return torch.Tensor(np.array(x_pred))
+
+def model_evaluation(model, X, y, dataset, device, label="Full model", measure_speed=False):
+    y = torch.Tensor(np.array(y)).detach().cpu()
+    dataloader = DataLoader(X, batch_size=512, shuffle=False)
+    x_pred = inference(model, dataloader, label, device, measure_time=measure_speed)
 
     tp = (x_pred.view(-1) == 1.0) & (y.view(-1) == 1.0)
     tn = (x_pred.view(-1) == 0.0) & (y.view(-1) == 0.0)
@@ -73,7 +83,7 @@ def report_metrics(stats, model_label, dataset_path, model_size):
     logging.info(f"{model_label} evaluation: ")
     logging.info(f"    Dataset size is:{dataset_size_kb: .2f} KB")
     logging.info(f"    {model_label} size:{model_size: .2f} KB")
-    logging.info(f"    {model_label} Efficiency:{(dataset_size_kb / model_size) * 100: .2f}%")
+    logging.info(f"    {model_label} Effectivity:{(dataset_size_kb / model_size) * 100: .2f}%")
 
     logging.info(f"    {model_label} Accuracy:{accuracy: .4f}")
     logging.info(f"    {model_label} Recall:{recall: .4f}")

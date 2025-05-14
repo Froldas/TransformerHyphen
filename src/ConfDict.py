@@ -4,7 +4,7 @@ from src.models.simple_transformer import *
 from src.models.combined_transformer import *
 
 from src.encodings.binary import BinaryEncoding, AdvancedBinaryEncoding, OneHotEncoding
-from src.encodings.embedding import SimpleEmbedding, LargerEmbedding
+from src.encodings.embedding import SimpleEmbedding, LargerEmbedding, PositionalEmbedding
 from src.encodings.float import SimpleFloatEncoding, AdvancedFloatEncoding, AdvancedFloatEncoding2
 
 """
@@ -21,6 +21,8 @@ class Models:
     def __init__(self, input_tokens, embedding_size, output_size, hyphen_threshold):
         self.models = {"SimpleMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleDeeperMLP": SimpleDeeperMLP(input_tokens * embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
+                       "SimpleLargeDeeperMLP": SimpleDeeperMLP(input_tokens * embedding_size, hidden_size=512,
+                                                          output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleMLPConvolution": SimpleMLPConvolution(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleLargeMLP": SimpleMLP(input_tokens * embedding_size, hidden_size=512, output_size=output_size, hyphen_threshold=hyphen_threshold),
                        "SimpleTransformer": SimpleTransformer(input_tokens, embedding_size, hidden_size=128, output_size=output_size, hyphen_threshold=hyphen_threshold),
@@ -38,6 +40,15 @@ class Models:
                        "AdvancedTransformerResidualDeep": AdvancedTransformerResidualDeep(input_tokens, embedding_size, hidden_size=128,
                                                                     output_size=output_size,
                                                                     hyphen_threshold=hyphen_threshold),
+                       "AdvancedTransformerResidualDeep256": AdvancedTransformerResidualDeep(input_tokens, embedding_size,
+                                                                                          hidden_size=256,
+                                                                                          output_size=output_size,
+                                                                                          hyphen_threshold=hyphen_threshold),
+                       "AdvancedTransformerResidualDeepMHead": AdvancedTransformerResidualDeepMHead(input_tokens,
+                                                                                             embedding_size,
+                                                                                             hidden_size=128,
+                                                                                             output_size=output_size,
+                                                                                             hyphen_threshold=hyphen_threshold),
                        "SimpleLargeTransformerResidual": SimpleTransformerResidual(input_tokens, embedding_size, hidden_size=512, output_size=output_size, hyphen_threshold=hyphen_threshold)
                        }
 
@@ -54,4 +65,5 @@ class Encodings:
                           "advanced_float": AdvancedFloatEncoding,
                           "advanced_float2": AdvancedFloatEncoding2,
                           "simple_embedding": SimpleEmbedding,
+                          "positional_embedding": PositionalEmbedding,
                           "large_embedding": LargerEmbedding}

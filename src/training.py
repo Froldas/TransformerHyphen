@@ -98,7 +98,9 @@ def model_training(model, train_dataset, num_epochs, num_folds, optimizer, loss_
                     logging.info("Early stopping activated. Restoring best model weights.")
                     model.load_state_dict(early_stopping.best_model_state)
                     shutil.rmtree(checkpoints_dir)
-                    break
+                    plot_loss(train_losses, save_path=Path(work_dir) / "train_curve.png")
+                    plot_loss(val_losses, title="Validation Loss", save_path=Path(work_dir) / "val_curve.png")
+                    return
 
     plot_loss(train_losses, save_path=Path(work_dir) / "train_curve.png")
     plot_loss(val_losses, title="Validation Loss", save_path=Path(work_dir) / "val_curve.png")

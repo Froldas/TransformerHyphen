@@ -35,6 +35,9 @@ class Attention(nn.Module):
         else:
             raise ValueError("Unsupported normalization. Choose 'layernorm', 'batchnorm', or None.")
 
+        # make the weights class property so it can be accessed for visualization
+        self.attn_weights = None
+
     def forward(self, x, mask=None):
         # x: (batch_size, seq_length, embed_dim)
         residual = x
@@ -50,11 +53,11 @@ class Attention(nn.Module):
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.head_dim)
         if mask is not None:
             scores = scores.masked_fill(mask == 0, float('-inf'))
-        attn_weights = F.softmax(scores, dim=-1)
+        self.attn_weights = F.softmax(scores, dim=-1)
         if self.dropout_ratio > 0.0:
-            attn_weights = self.dropout(attn_weights)
+            self.attn_weights = self.dropout(self.attn_weights)
 
-        attn_output = torch.matmul(attn_weights, V)  # (batch, heads, seq_len, head_dim)
+        attn_output = torch.matmul(self.attn_weights, V)  # (batch, heads, seq_len, head_dim)
         attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, seq_length, self.embed_dim)
         output = self.out_proj(attn_output)
         if self.dropout_ratio > 0.0:
@@ -81,6 +84,7 @@ class FeedForward(nn.Module):
 
         self.output_dim = output_dim or input_dim
         self.residual = residual and (self.output_dim == input_dim)
+        self.dropout_val = dropout
 
         # Linear layer
         self.linear = nn.Linear(input_dim, self.output_dim)
@@ -108,7 +112,9 @@ class FeedForward(nn.Module):
     def forward(self, x):
         out = self.linear(x)
         out = self.activation(out)
-        out = self.dropout(out)
+
+        if self.dropout_val > 0.0:
+            out = self.dropout(out)
 
         if self.residual:
             out = out + x  # Residual connection
