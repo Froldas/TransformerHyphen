@@ -52,7 +52,8 @@ class HyphenationInterface:
         data = {"num_input_tokens": self.num_input_tokens,
                 "encoding_size": self.encoding_size,
                 "output_size": self.output_size,
-                "letter_encoding": self.letter_encoding}
+                "letter_encoding": self.letter_encoding,
+                "pos_embedding": self.pos_embedding}
 
         os.makedirs(Path(self.work_dir), exist_ok=True)
 
@@ -67,7 +68,8 @@ class HyphenationInterface:
                                     data["encoding_size"],
                                     data["output_size"],
                                     data["letter_encoding"],
-                                    Path("build"))
+                                    Path("build"),
+                                    pos_embedding=data["pos_embedding"])
 
     def add_positional_encoding(self, x):
         """

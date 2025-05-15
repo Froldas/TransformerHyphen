@@ -23,13 +23,12 @@ def get_attention_weights(module, input, output):
 
 def plot_attention(word):
     # Visualize attention map
-    ax = sns.heatmap(attention_weights[-1], cmap='viridis')
+    ax = sns.heatmap(attention_weights[-1][0:len(word),0:len(word)],
+                     cmap='viridis',
+                     xticklabels=word,
+                     yticklabels=word)
     plt.title(f'Attention Map - {word}')
     # Set axis labels
-    ax.set_xticks(range(len(word)))
-    ax.set_yticks(range(len(word)))
-    ax.set_xticklabels(word, rotation=90)
-    ax.set_yticklabels(word, rotation=0)
     plt.xlabel('Key Positions')
     plt.ylabel('Query Positions')
     plt.show()

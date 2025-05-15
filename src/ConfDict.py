@@ -4,7 +4,7 @@ from src.models.simple_transformer import *
 from src.models.combined_transformer import *
 
 from src.encodings.binary import BinaryEncoding, AdvancedBinaryEncoding, OneHotEncoding
-from src.encodings.embedding import SimpleEmbedding, SimpleEmbedding2, LargerEmbedding
+from src.encodings.embedding import SimpleEmbedding, NgramEmbedding, LargerEmbedding
 from src.encodings.float import SimpleFloatEncoding, AdvancedFloatEncoding, AdvancedFloatEncoding2
 
 """
@@ -64,6 +64,6 @@ class Encodings:
                           "simple_float": SimpleFloatEncoding,
                           "advanced_float": AdvancedFloatEncoding,
                           "advanced_float2": AdvancedFloatEncoding2,
+                          "gram_embedding": NgramEmbedding,
                           "simple_embedding": SimpleEmbedding,
-                          "simple_embedding2": SimpleEmbedding2,
                           "large_embedding": LargerEmbedding}

@@ -8,9 +8,9 @@ from sklearn.feature_extraction.text import CountVectorizer
 from src.utils import remove_hyphenation
 
 
-class SimpleEmbedding(Encoding):
+class NgramEmbedding(Encoding):
     """
-    Encodes all letters into embeddings of size 32
+    Encodes all letters into Ngram embeddings of size 32
     """
 
     def __init__(self, dataset: List[str], unique_letters: List[str]):
@@ -49,7 +49,7 @@ class SimpleEmbedding(Encoding):
         return self._encoding_size
 
 
-class SimpleEmbedding2(Encoding):
+class SimpleEmbedding(Encoding):
     """
     Encodes all letters into embeddings of size 32
     """
