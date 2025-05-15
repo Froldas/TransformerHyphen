@@ -120,7 +120,8 @@ def main():
     dataset = dataset_type(data_file=config["dataset"],
                            work_dir=config["work_dir"],
                            encoding=Encodings().encodings[config["encoding"]],
-                           print_info=config["print_dataset_statistics"])
+                           print_info=config["print_dataset_statistics"],
+                           pos_embedding=config["positional_embedding"])
 
     train_dataset, test_dataset = utils.split_dataset(dataset, config["train_split"],
                                                       work_dir=config["work_dir"],

@@ -89,7 +89,7 @@ class TransformerCombined2(nn.Module):
         self.embed_size = embed_size
         self.hyphen_threshold = hyphen_threshold
 
-        self.attention1 = Attention(embed_size, normalization='batchnorm')
+        self.attention = Attention(embed_size, normalization='batchnorm')
         self.fc_att1 = FeedForward(input_tokens * embed_size, input_tokens * embed_size, normalization='batchnorm')
         self.attention2 = Attention(embed_size, normalization='batchnorm')
         self.fc_att2 = FeedForward(input_tokens * embed_size, input_tokens * embed_size, normalization='batchnorm')
@@ -101,7 +101,7 @@ class TransformerCombined2(nn.Module):
     def forward(self, x):
         res = x
         x = x.reshape(-1, self.input_tokens, self.embed_size)
-        x = self.attention1(x)
+        x = self.attention(x)
         x = x.reshape(-1, self.input_tokens * self.embed_size)
         x = self.fc_att1(x)
         x += res
@@ -131,7 +131,7 @@ class TransformerCombined3(nn.Module):
         self.input_tokens = input_tokens
         self.embed_size = embed_size
         self.hyphen_threshold = hyphen_threshold
-        self.attention1 = Attention(embed_size, residual=True, normalization='batchnorm')
+        self.attention = Attention(embed_size, residual=True, normalization='batchnorm')
         self.attention2 = Attention(embed_size, residual=True, normalization='batchnorm')
         self.fc_in = FeedForward(input_tokens * embed_size, hidden_size, normalization='batchnorm')
         self.fc_hidden1 = FeedForward(hidden_size, hidden_size, normalization='batchnorm', residual=True)
@@ -139,7 +139,7 @@ class TransformerCombined3(nn.Module):
 
     def forward(self, x):
         x = x.reshape(-1, self.input_tokens, self.embed_size)
-        x = self.attention1(x)
+        x = self.attention(x)
         x = self.attention2(x)
         x = x.reshape(-1, self.input_tokens * self.embed_size)
         x = self.fc_in(x)

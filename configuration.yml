@@ -3,6 +3,8 @@
 model: AdvancedTransformerResidualDeep
 sliding_window: False
 encoding: one_hot
+encoding: simple_embedding2
+positional_embedding: True
 dataset: datasets/cs-tenten.wlh
 seed: 42
 batch_size: 512
@@ -10,7 +12,7 @@ num_folds: 10
 num_epochs: 2
 train_split: 0.9
 learning_rate: 0.001
-hyphen_threshold: 0.9
+hyphen_threshold: 0.5
 early_stopping: True
 
 # paths

@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import numpy as np
 import tensorflow as tf
 
 from pathlib import Path
@@ -11,13 +12,14 @@ from src.constants import HYPHENS
 
 
 class HyphenationInterface:
-    def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir):
+    def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir, pos_embedding=False):
         self.num_input_tokens = num_input_tokens
         self.encoding_size = encoding_size
         self.input_size = num_input_tokens * encoding_size
         self.output_size = output_size
         self.letter_encoding = letter_encoding
         self.work_dir = work_dir
+        self.pos_embedding = pos_embedding
 
     def encode(self, word):
         input_vector = [0 for _ in range(self.input_size)]
@@ -26,7 +28,10 @@ class HyphenationInterface:
             if letter not in list(self.letter_encoding.keys()):
                 continue
             input_vector[idx * self.encoding_size: (idx + 1) * self.encoding_size] = self.letter_encoding[letter]
-        return tf.constant(input_vector, dtype=tf.float32).numpy()
+        encoded_input_tensor = tf.constant(input_vector, dtype=tf.float32).numpy()
+        if self.pos_embedding:
+            encoded_input_tensor = self.add_positional_encoding(encoded_input_tensor)
+        return encoded_input_tensor
 
     def convert_word_to_expected_output(self, word):
         hyphen_indices = [idx - 1 for idx, ch in enumerate(word) if ch == "-"]
@@ -64,9 +69,36 @@ class HyphenationInterface:
                                     data["letter_encoding"],
                                     Path("build"))
 
+    def add_positional_encoding(self, x):
+        """
+        Adds sinusoidal positional encoding to the input NumPy array.
+
+        Args:
+            x (np.ndarray): Input array of shape (batch_size, seq_len, embedding_dim)
+
+        Returns:
+            np.ndarray: Array with positional encoding added, same shape as input.
+        """
+        # Create a matrix of positions (seq_len, 1)
+        position = np.arange(self.num_input_tokens).reshape(self.num_input_tokens, 1)
+        div_term = np.exp(np.arange(0, self.encoding_size, 2) * (-np.log(10000.0) / self.encoding_size))
+
+        pe = np.zeros((self.num_input_tokens, self.encoding_size), dtype=np.float32)
+
+        pe[:, 0::2] = np.sin(position * div_term)
+        if self.encoding_size % 2 == 0:
+            pe[:, 1::2] = np.cos(position * div_term)
+        else:
+            pe[:, 1::2] = np.cos(position * div_term[:(self.encoding_size // 2)])
+
+        # Expand pe to match the batch size and add to input
+        x = x + pe.flatten(order="C")  # Broadcasting addition
+
+        return x
+
 
 class HyphenationDataset(Dataset, HyphenationInterface):
-    def __init__(self, data_file, work_dir, encoding=None, print_info=False):
+    def __init__(self, data_file, work_dir, encoding=None, print_info=False, pos_embedding=False):
         self.data_file = data_file
         self.unique_letters = set()
         self.longest_word = ""
@@ -88,7 +120,8 @@ class HyphenationDataset(Dataset, HyphenationInterface):
             self.encoding_size,
             self.output_size,
             self.letter_encoding,
-            work_dir)
+            work_dir,
+            pos_embedding=pos_embedding)
 
         for word in self.words:
             word_without_hyphens = word.replace("-", "")
@@ -134,7 +167,7 @@ class HyphenationDataset(Dataset, HyphenationInterface):
 
 
 class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
-    def __init__(self, data_file, work_dir, encoding=None, context_size=4, print_info=False):
+    def __init__(self, data_file, work_dir, encoding=None, context_size=4, print_info=False, pos_embedding=False):
         self.data_file = data_file
         self.unique_letters = set()
         self.longest_word = ""
@@ -157,7 +190,8 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
             self.encoding_size,
             self.output_size,
             self.letter_encoding,
-            work_dir)
+            work_dir,
+            pos_embedding=pos_embedding)
 
         for word in self.words:
             chunks = sliding_splits(word)
