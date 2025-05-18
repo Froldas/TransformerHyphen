@@ -68,13 +68,11 @@ class SimpleEmbedding(Encoding):
         char_to_idx = {char: idx for idx, char in enumerate(self._letters + ['<unk>', '<pad>'] )}
         idx_to_char = {idx: char for char, idx in char_to_idx.items()}
 
-        # Step 2: Convert strings to sequences of indices
         sequences = []
         for s in dataset:
             seq = [char_to_idx.get(char, char_to_idx['<unk>']) for char in s]
             sequences.append(seq)
 
-        # Step 3: Pad sequences to the same length
         # Find the length of the longest sequence
         max_len = max(len(seq) for seq in sequences)
         # Pad sequences with the index of '<pad>' token
@@ -82,10 +80,10 @@ class SimpleEmbedding(Encoding):
         # Convert to a tensor
         input_tensor = torch.tensor(padded_sequences, dtype=torch.long)  # Shape: (batch_size, seq_len)
 
-        # Step 4: Create an embedding layer
+        # Create an embedding layer
         vocab_size = len(char_to_idx)
-        embedding_dim = 32  # You can choose any embedding dimension
-        embedding_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embedding_dim)
+
+        embedding_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self._encoding_size)
         embedded = embedding_layer(input_tensor)
 
         for letter in self._letters:

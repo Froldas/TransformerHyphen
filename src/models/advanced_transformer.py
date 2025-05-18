@@ -58,12 +58,16 @@ class AdvancedTransformerResidualDeep(nn.Module):
         return x
 
 class AdvancedTransformerResidualDeepMHead(nn.Module):
-    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5):
+    def __init__(self, input_tokens, embed_size, hidden_size, output_size, hyphen_threshold=0.5, num_heads=4):
         super(AdvancedTransformerResidualDeepMHead, self).__init__()
         self.input_tokens = input_tokens
         self.embed_size = embed_size
         self.hyphen_threshold = hyphen_threshold
-        self.attention = Attention(embed_size, residual=True, normalization='layernorm')
+        self.num_heads = num_heads
+        if embed_size % self.num_heads == 0:
+            self.attention = Attention(embed_size, residual=True, normalization='layernorm', num_heads=self.num_heads)
+        else:
+            self.attention = Attention(embed_size, residual=True, normalization='layernorm', num_heads=1)
         #self.attention = Attention(embed_size, residual=True, normalization='layernorm', num_heads=8)
         self.fc_hidden1 = FeedForward(input_tokens * embed_size, hidden_size, residual=True, normalization='layernorm')
         self.fc_hidden2 = FeedForward(hidden_size, hidden_size, residual=True, normalization='layernorm')

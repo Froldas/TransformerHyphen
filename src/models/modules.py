@@ -35,7 +35,7 @@ class Attention(nn.Module):
         else:
             raise ValueError("Unsupported normalization. Choose 'layernorm', 'batchnorm', or None.")
 
-        # make the weights class property so it can be accessed for visualization
+        # make the weights class property, so it can be accessed for visualization
         self.attn_weights = None
 
     def forward(self, x, mask=None):

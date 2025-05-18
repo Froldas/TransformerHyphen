@@ -221,6 +221,8 @@ class HyphenationDatasetSlidingWindow(Dataset, HyphenationInterface):
                 self.unique_letters.update(list(word_without_hyphens))
                 self.longest_word = max(self.longest_word, word_without_hyphens, key=len)
 
+        self.unique_letters = sorted(list(self.unique_letters))
+
     def _print_info(self):
         logging.info(f"Dataset size: {len(self.datapoints)}")
         logging.info(f"Longest word: {self.longest_word}")

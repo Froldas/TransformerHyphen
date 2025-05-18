@@ -5,13 +5,13 @@ import shutil
 import sys
 import torch
 from pathlib import Path
-
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
 
 import src.utils as utils
 from src.ConfDict import Models, Encodings
-from src.evaluation import model_evaluation, convert_mispredicted, analyze_mismatches
+from src.evaluation import model_evaluation, convert_mispredicted, analyze_mismatches, inference
 from src.dataset import HyphenationDataset, HyphenationDatasetSlidingWindow
 from src.patgen import train_patgen, eval_patgen
 from src.training import model_training
@@ -39,8 +39,13 @@ def evaluation(model, quantized_model, config, test_dataset, original_dataset, d
                      measure_speed=config["measure_speed"])
 
     if config["generate_mispredicted"]:
+        logging.info("Running inference to generate mispredicted words")
         with open(Path(config["work_dir"]) / config["mispredict_path"], "w+", encoding="utf-8") as f:
-            x_pred = model(torch.Tensor(np.array(X)).to("cpu"))
+
+            data_loader = DataLoader(X, batch_size=512, shuffle=False)
+
+            x_pred = inference(quantized_model, data_loader, "Quantized", "cpu", measure_time=False)
+
             for i in range(len(original_words)):
                 if not torch.equal(x_pred[i], torch.Tensor(y[i])):
                     f.writelines(

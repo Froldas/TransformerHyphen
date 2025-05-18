@@ -55,6 +55,7 @@ def model_evaluation(model, X, y, dataset, device, label="Full model", measure_s
 def convert_mispredicted(word, prediction, label):
     bad = (prediction == 1.0) & (label == 0.0)
     missed = (prediction == 0.0) & (label == 1.0)
+    correct = (prediction == 1.0) & (label == 1.0)
 
     result = ""
     for i, char in enumerate(word.replace("-", "")):
@@ -63,6 +64,8 @@ def convert_mispredicted(word, prediction, label):
             result += "*"
         if i < len(missed) and missed[i]:
             result += "."
+        if i < len(missed) and correct[i]:
+            result += "-"
     return result
 
 
@@ -83,15 +86,15 @@ def report_metrics(stats, model_label, dataset_path, model_size):
     logging.info(f"{model_label} evaluation: ")
     logging.info(f"    Dataset size is:{dataset_size_kb: .2f} KB")
     logging.info(f"    {model_label} size:{model_size: .2f} KB")
-    logging.info(f"    {model_label} Effectivity:{(dataset_size_kb / model_size) * 100: .2f}%")
+    logging.info(f"    {model_label} Effectivity:{(dataset_size_kb / model_size) * 100: .2f} %")
 
     logging.info(f"    {model_label} Accuracy:{accuracy: .4f}")
     logging.info(f"    {model_label} Recall:{recall: .4f}")
     logging.info(f"    {model_label} Precision:{precision: .4f}")
 
-    logging.info(f"    {model_label} Correct Hyphens: {correct} ({(correct * 100 / total):.2f}%)")
-    logging.info(f"    {model_label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f}%)")
-    logging.info(f"    {model_label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f}%)")
+    logging.info(f"    {model_label} Correct Hyphens: {correct} ({(correct * 100 / total):.2f} %)")
+    logging.info(f"    {model_label} Bad Hyphens: {bad} ({(bad * 100 / total):.2f} %)")
+    logging.info(f"    {model_label} Missed Hyphens: {missed} ({(missed * 100 / total):.2f} %)")
 
 
 def analyze_mismatches(config):
@@ -116,7 +119,9 @@ def analyze_mismatches(config):
     both_misprediction_pth = Path(config["work_dir"]) / "common_mispredicted.txt"
 
     with open(both_misprediction_pth, "w+", encoding="utf-8") as f:
-        f.writelines(f"model|patgen\n")
+        f.writelines(f"* = bad hyphen\n"
+                     f". = missing hyphen\n"
+                     f"model|patgen\n")
         for key, value in mismatches_dict.items():
             if len(value) == 2:
                 f.writelines(f"{value[0]}|{value[1]}\n")
