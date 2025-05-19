@@ -2,6 +2,11 @@
 
 :author: Froldas
 
+
+== About
+
+Project serves as a home for my master thesis "Transformer-Based Word Hyphenation" which aims to evaluate transformer models in the hyphenation task. The project is able to proceed with the full learning pipeline, evaluation and further analysis.
+
 == Getting started
 
 Python version >= 3.12 required.
@@ -10,11 +15,7 @@ Execute `pip install -r .` to install all required libraries.
 
 Program also expects `dot` (needed by graphviz) in your path, to generate training curves.
 
-== About
-
-Project serves as a home for my master thesis "Transformer-Based Word Hyphenation"
-
-=== How to use
+== How to use
 
 Configure `configuration.yml` to your liking. All the models and encoding mapping can be found in `src/ConfDict.py` source file.
 
@@ -31,7 +32,7 @@ INFERENCE: `inference.py word1 word2 ...`
 Performs inference on all words given as a parameters and prints the predicted hyphenation. For the inference to work, `work_dir` must point to a directory with already previously trained model.
 `print_attention_map` will switch to a slow mode and print attention map for each input word if the model has an attention layer.
 
-== Parameters
+=== Parameters
 
 `model` : pick a model which is present in `src/ConfDict.py` `Models` class
 
