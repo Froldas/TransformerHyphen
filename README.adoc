@@ -6,51 +6,116 @@
 
 Python version >= 3.12 required.
 
-`pip install -r .`
+Execute `pip install -r .` to install all required libraries.
 
-dot (needed by graphviz) is expected in your path
+Program also expects `dot` (needed by graphviz) in your path, to generate training curves.
 
 == About
 
-Hyphenation using transformers
+Project serves as a home for my master thesis "Transformer-Based Word Hyphenation"
 
 === How to use
 
-TRAIN: `train.py`
+Configure `configuration.yml` to your liking. All the models and encoding mapping can be found in `src/ConfDict.py` source file.
 
-Runs training of the model and dumps the network files with its configuration plus performs evaluation.
+TRAIN and EVALUATE: `train.py`
+
+Runs training of the model and dumps the network files with its configuration plus performs evaluation alongside additional analysis based on your configuration.
 
 GRID_RUN: `grid_run.py`
-Alternatively, there is script `grid_run.py` where you can select which configuration superset will be run
-in a sequence.
+Alternatively, there is script `grid_run.py` where you can select which configuration superset will be run in a sequence.
+The script is as of not able to let you select set of models, encoding and datasets.
+Other parameters cannot be changed, but may the user feel free to easily change the file as needed.
 
-== Configuration space
-Using `configuration.yml` you can control what model architecture, encoding, learning rate and other parameters are used during all stages.
+INFERENCE: `inference.py word1 word2 ...`
+Performs inference on all words given as a parameters and prints the predicted hyphenation. For the inference to work, `work_dir` must point to a directory with already previously trained model.
+`print_attention_map` will switch to a slow mode and print attention map for each input word if the model has an attention layer.
 
-Here is the list of the most important ones:
+== Parameters
 
-=== *model*
+`model` : pick a model which is present in `src/ConfDict.py` `Models` class
 
-`SimpleMLP` - regular fully connected multi-layer perceptron model
+`encoding`: pick an embedding which is present in `src/Encodings.py` `Encodings` class
 
-`SimpleTransformer` - self-attention layer followed by fully connected model
+`sliding_window`: turns on one-by-one hyphenation with the context window of 4 to each side. Will increase the train and inference time but with benefit of better predictions and less space.
 
-...
-Check src/ConfDict.py to see all available models
+`positional_embedding`: will add positional embeddings to the encoded letters. Advised to use only with the `embedding` encoding.
 
-=== *encoding*
+`dataset`: path to the dataset f.e. `datasets/cs-tenten.wlh`
 
-`binary` - letters are converted to a binary number based on their index
+`seed`: seed used to control all randomness
 
-`one_hot` - letters are converted to a one-hot vector based on their index
+NOTE: model will still not be stable due to random rounding errors so expect lower percentages of possible nuances
 
-`simple_float` - letters are converted to a single float with even spacing
+`batch_size`: used to control parallelism
 
-`advanced_float` - letters are converted to a single float with vowels and consonants grouped
+`num_folds` and `num_epochs`: we are using cross-validation so `num_folds` controls how much folds there are and `num_epochs` controls how much times the folds are run.
+
+`train_split`: float number specifying how much data is used for training (by default 0.9)
+
+`learning_rate`: training parameter
+
+`hyphen_threshold`: float number specifying how much the model must be sure with a hyphen, so we can consider a hyphen was predicted
+
+`early_stopping`: if set to True, after 3 train rounds with no improvement, the training is stopped and best model so far is used
+
+`work_dir`: where all files will be dumped to
+
+`model_path`: path of the produced model
+
+I did not test changing all of these in all cases properly, so I advise not to touch those:
+`configuration_path`, `mispredict_path`, `training_log_path`, `onxx_model_path`
 
 
+`generate_mispredicted`: run eval on all words in the dataset and dump all the ones incorrectly hyphenated
 
-== Notes
-Oxford dictionary 500 is a merge of oxford 3000 and oxford 5000 etra 2000 words, but I had to clean non-letter symbols,
-compound phrases and duplication marks
+`english_words`: Merge `Oxford 5000.wlh` to your main dataset.
+
+`print_dataset_statistics`: prints info about encoding and dataset
+
+`patgen: turn on Patgen training and eval
+
+`patgen_force_rebuild`: If set to True, the Patgen is rebuild each time. If set to False, if `Patgen` folder if found in your `work_dir` it is not rebuilded. (But even if you change dataset so be careful!)
+
+`analyze_mismatches`: takes Patgen and model mispredictions and finsd common words
+
+`measure_speed`: prints the evaluation time for all models and Patgen
+
+`print_attention_map`: only usable in the inference mode.
+
+
+`onxx_export`: exports the model in an onxx format, but it is not working for all models rn
+
+== Datasets
+
+Located in the `datasets` folder.
+
+Sources of the datasets:
+
+`cs-ujc.wlh`:
+Internetová jazyková příručka (Internet Language Reference Book).
+Praha: Ústav pro jazyk český AV ČR, 2025. Available also from:
+https://prirucka.ujc.cas.cz/?id=135.
+
+`cs-tenten/wlh`:SOJKA, Ondřej; SOJKA, Petr. cshyphen repository. [N.d.]. Avail-
+able also from: https://github.com/tensojka/cshyphen.
+
+`ger_gist.wlh`
+17. SIEMENS, Matthias. Gist: 2aac63cf8d1b88c48d33c9c82f8f8e15 [https:
+//gist.github.com/msiemens/2aac63cf8d1b88c48d33c9c82f8f8e15].
+
+`wortliste.wlh`:
+ DEUTSCHSPRACHIGE TRENNMUSTERMANNSCHAFT. Wortliste:
+A Database of German Words with Hyphenation Information. 2024.
+Available also from: https://repo.or.cz/w/wortliste.git.
+Git repository (last modified on 8 December 2024).
+
+
+`Oxford 5000.wlh`
+PRESS, Oxford University. The Oxford 5000: Expanded Core Word
+List for Advanced Learners of English [https://www.oxfordlearnersdictionaries.
+com/wordlists/oxford3000-5000]. 2025.
+
+NOTE: Oxford dictionary 5000 is a merge of oxford 3000 and oxford 5000 extra 2000 words, but I had to clean non-letter symbols,
+compound phrases and duplication marks.
 

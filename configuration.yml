@@ -34,7 +34,7 @@ measure_speed: False
 
 # inference
 # requires model with attention
-print_attention_map: True
+print_attention_map: False
 
 # exporting (not 100% working for all models for now)
 onxx_export: False
