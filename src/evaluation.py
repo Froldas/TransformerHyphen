@@ -1,10 +1,13 @@
+from collections import Counter
 import logging
 import numpy as np
 import os
 import time
 import torch
-from torch.utils.data import DataLoader
+
 from pathlib import Path
+from typing import List
+from torch.utils.data import DataLoader
 
 
 def model_size(model):
@@ -118,10 +121,45 @@ def analyze_mismatches(config):
 
     both_misprediction_pth = Path(config["work_dir"]) / "common_mispredicted.txt"
 
+    commonly_mispredicted = []
     with open(both_misprediction_pth, "w+", encoding="utf-8") as f:
         f.writelines(f"* = bad hyphen\n"
                      f". = missing hyphen\n"
                      f"model|patgen\n")
         for key, value in mismatches_dict.items():
             if len(value) == 2:
-                f.writelines(f"{value[0]}|{value[1]}\n")
+                line = f"{value[0]}|{value[1]}"
+                f.writelines(f"{line}\n")
+                commonly_mispredicted.append(line)
+
+    analyze_substrings(commonly_mispredicted)
+
+
+
+def analyze_substrings(words: List[str], min_sub_len: int = 3, max_sub_len: int = 5, top_n: int = 10) -> None:
+    """
+    Analyzes a list of words to find the most common substrings containing '*' or '.'.
+
+    Parameters:
+    - words: List of input words.
+    - min_sub_len: Minimum length of substrings to consider.
+    - max_sub_len: Maximum length of substrings to consider.
+    - top_n: Number of top patterns to display.
+    """
+    substr_counter = Counter()
+
+    for word in words:
+        word_len = len(word)
+        lower_word = word.lower()
+
+        # Substrings containing '*' or '.'
+        for length in range(min_sub_len, max_sub_len + 1):
+            for i in range(word_len - length + 1):
+                substr = lower_word[i:i+length]
+                if '*' in substr or '.' in substr:
+                    substr_counter[substr] += 1
+
+    # Display Results
+    logging.info(f"Common mismatch analysis:\n  top {top_n} Substrings Containing '*' or '.':")
+    for substr, count in substr_counter.most_common(top_n):
+        logging.info(f"    {substr}: {count}")

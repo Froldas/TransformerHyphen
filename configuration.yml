@@ -2,14 +2,13 @@
 # training and model selection
 model: AdvancedTransformerResidualDeep
 sliding_window: False
-encoding: one_hot
-encoding: simple_embedding2
+encoding: embedding
 positional_embedding: True
 dataset: datasets/cs-tenten.wlh
 seed: 42
 batch_size: 512
 num_folds: 10
-num_epochs: 2
+num_epochs: 3
 train_split: 0.9
 learning_rate: 0.001
 hyphen_threshold: 0.5
@@ -24,15 +23,17 @@ training_log_path: training.log
 onxx_model_path: model_export.onxx
 
 # evaluation
-generate_mispredicted: False
+generate_mispredicted: True
 english_words: False
-print_dataset_statistics: True
-patgen: False
-patgen_force_rebuild: False
-analyze_mismatches: False
-measure_speed: True
+print_dataset_statistics: False
+patgen: True
+patgen_force_rebuild: True
+# analyzing mismatches requires patgen and generate_mispredicted
+analyze_mismatches: True
+measure_speed: False
 
 # inference
+# requires model with attention
 print_attention_map: True
 
 # exporting (not 100% working for all models for now)
