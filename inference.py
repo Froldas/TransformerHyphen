@@ -35,8 +35,18 @@ def plot_attention(word):
 
 
 def main():
-    config = load_yaml_conf(Path(YML_CONF_PATH))
-    hyp_itf = HyphenationInterface.load_configuration(config["work_dir"], config["configuration_path"])
+    words = []
+    if len(sys.argv) > 1 and sys.argv[1] == "-c":
+        # use config given as a parameter
+        config = load_yaml_conf(Path(sys.argv[2]))
+        words = sys.argv[3:]
+    else:
+        config = load_yaml_conf(Path(YML_CONF_PATH))
+        words = sys.argv[1:]
+
+    hyp_itf = HyphenationInterface.load_configuration(config["work_dir"],
+                                                      config["configuration_path"],
+                                                      sliding_window=config["sliding_window"])
 
     model_path = Path(config["work_dir"]) / config["model_path"]
     loaded_model = Models(hyp_itf.num_input_tokens,
@@ -58,9 +68,12 @@ def main():
         loaded_model.attention.register_forward_hook(get_attention_weights)
 
 
-    for word in sys.argv[1:]:
+    for word in words:
         input_tensor = Tensor(hyp_itf.encode(word))
-        output = loaded_model(input_tensor)
+        if config["sliding_window"]:
+            output = loaded_model(input_tensor)
+        else:
+            output = loaded_model(input_tensor)
         if config["print_attention_map"]:
             plot_attention(word)
         print(insert_hyphenation(word, output[0]))

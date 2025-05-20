@@ -31,6 +31,9 @@ Other parameters cannot be changed, but may the user feel free to easily change 
 INFERENCE: `inference.py word1 word2 ...`
 Performs inference on all words given as a parameters and prints the predicted hyphenation. For the inference to work, `work_dir` must point to a directory with already previously trained model.
 `print_attention_map` will switch to a slow mode and print attention map for each input word if the model has an attention layer.
+You can also run inference demo by running `inference.py -c demos/wortliste-build/configuration.yml <word1> <word2> ...`.
+
+NOTE: sliding more does not work with the inference
 
 === Parameters
 

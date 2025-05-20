@@ -12,7 +12,7 @@ from src.constants import HYPHENS
 
 
 class HyphenationInterface:
-    def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir, pos_embedding=False):
+    def __init__(self, num_input_tokens, encoding_size, output_size, letter_encoding, work_dir, pos_embedding=False, sliding_window=False):
         self.num_input_tokens = num_input_tokens
         self.encoding_size = encoding_size
         self.input_size = num_input_tokens * encoding_size
@@ -20,6 +20,7 @@ class HyphenationInterface:
         self.letter_encoding = letter_encoding
         self.work_dir = work_dir
         self.pos_embedding = pos_embedding
+        self.sliding_window = sliding_window
 
     def encode(self, word):
         input_vector = [0 for _ in range(self.input_size)]
@@ -30,7 +31,7 @@ class HyphenationInterface:
             input_vector[idx * self.encoding_size: (idx + 1) * self.encoding_size] = self.letter_encoding[letter]
         encoded_input_tensor = tf.constant(input_vector, dtype=tf.float32).numpy()
         if self.pos_embedding:
-            encoded_input_tensor = self.add_positional_encoding(encoded_input_tensor)
+            encoded_input_tensor = self.add_positional_encoding(encoded_input_tensor, self.num_input_tokens)
         return encoded_input_tensor
 
     def convert_word_to_expected_output(self, word):
@@ -53,7 +54,8 @@ class HyphenationInterface:
                 "encoding_size": self.encoding_size,
                 "output_size": self.output_size,
                 "letter_encoding": self.letter_encoding,
-                "pos_embedding": self.pos_embedding}
+                "pos_embedding": self.pos_embedding,
+                "sliding_window": self.pos_embedding}
 
         os.makedirs(Path(self.work_dir), exist_ok=True)
 
@@ -61,7 +63,7 @@ class HyphenationInterface:
             pickle.dump(data, f)
 
     @staticmethod
-    def load_configuration(work_dir, conf_path):
+    def load_configuration(work_dir, conf_path, sliding_window=False):
         with open(Path(work_dir) / conf_path, "rb") as f:
             data = pickle.load(f)
         return HyphenationInterface(data["num_input_tokens"],
@@ -71,7 +73,7 @@ class HyphenationInterface:
                                     Path("build"),
                                     pos_embedding=data["pos_embedding"])
 
-    def add_positional_encoding(self, x):
+    def add_positional_encoding(self, x, input_tokens):
         """
         Adds sinusoidal positional encoding to the input NumPy array.
 
@@ -82,10 +84,10 @@ class HyphenationInterface:
             np.ndarray: Array with positional encoding added, same shape as input.
         """
         # Create a matrix of positions (seq_len, 1)
-        position = np.arange(self.num_input_tokens).reshape(self.num_input_tokens, 1)
+        position = np.arange(input_tokens).reshape(input_tokens, 1)
         div_term = np.exp(np.arange(0, self.encoding_size, 2) * (-np.log(10000.0) / self.encoding_size))
 
-        pe = np.zeros((self.num_input_tokens, self.encoding_size), dtype=np.float32)
+        pe = np.zeros((input_tokens, self.encoding_size), dtype=np.float32)
 
         pe[:, 0::2] = np.sin(position * div_term)
         if self.encoding_size % 2 == 0:
